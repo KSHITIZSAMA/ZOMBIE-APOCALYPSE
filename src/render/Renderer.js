@@ -168,26 +168,38 @@ export class Renderer {
    * @private
    */
   _setupCanvas() {
-    const dpr = window.devicePixelRatio || 1;
-    const rect = this.canvas.getBoundingClientRect();
+    const dpr = typeof window !== 'undefined' ? (window.devicePixelRatio || 1) : 1;
+    const rect = typeof this.canvas.getBoundingClientRect === 'function'
+      ? this.canvas.getBoundingClientRect()
+      : { width: 1280, height: 720 };
 
-    this.canvas.width = rect.width * dpr;
-    this.canvas.height = rect.height * dpr;
+    if (rect.width > 0 && rect.height > 0) {
+      this._logicalWidth = rect.width;
+      this._logicalHeight = rect.height;
+    } else {
+      this._logicalWidth = 1280;
+      this._logicalHeight = 720;
+    }
 
-    this.ctx.scale(dpr, dpr);
+    this.canvas.width = this._logicalWidth * dpr;
+    this.canvas.height = this._logicalHeight * dpr;
 
-    this.canvas.logicalWidth = rect.width;
-    this.canvas.logicalHeight = rect.height;
+    if (this.ctx && typeof this.ctx.scale === 'function') {
+      this.ctx.scale(dpr, dpr);
+    }
+
+    this.canvas.logicalWidth = this._logicalWidth;
+    this.canvas.logicalHeight = this._logicalHeight;
   }
 
   /**
-   * Get logical canvas dimensions (CSS pixels).
+   * Get cached logical canvas dimensions (CSS pixels) without triggering reflows.
    * @returns {{ width: number, height: number }}
    */
   getLogicalSize() {
     return {
-      width: this.canvas.logicalWidth || this.canvas.getBoundingClientRect().width,
-      height: this.canvas.logicalHeight || this.canvas.getBoundingClientRect().height,
+      width: this._logicalWidth || this.canvas.logicalWidth || 1280,
+      height: this._logicalHeight || this.canvas.logicalHeight || 720,
     };
   }
 }

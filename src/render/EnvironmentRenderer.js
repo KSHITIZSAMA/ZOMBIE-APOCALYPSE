@@ -292,9 +292,10 @@ export class EnvironmentRenderer {
     const hillAlpha = 0.15 + daylight * 0.2;
     ctx.fillStyle = `rgba(${this._lerp(40, 80, daylight)}, ${this._lerp(55, 100, daylight)}, ${this._lerp(65, 80, daylight)}, ${hillAlpha})`;
 
+    // Distant hills (background)
     ctx.beginPath();
     ctx.moveTo(0, groundY);
-    for (let x = 0; x <= w; x += 2) {
+    for (let x = 0; x <= w; x += 8) {
       const worldX = x - offset;
       const hillY = groundY - 40 - Math.sin(worldX * 0.003) * 30 - Math.sin(worldX * 0.007 + 2) * 20;
       ctx.lineTo(x, hillY);
@@ -310,7 +311,7 @@ export class EnvironmentRenderer {
 
     ctx.beginPath();
     ctx.moveTo(0, groundY);
-    for (let x = 0; x <= w; x += 2) {
+    for (let x = 0; x <= w; x += 8) {
       const worldX = x - offset2;
       const hillY = groundY - 20 - Math.sin(worldX * 0.005 + 1) * 25 - Math.sin(worldX * 0.011 + 3) * 15;
       ctx.lineTo(x, hillY);
@@ -447,30 +448,26 @@ export class EnvironmentRenderer {
 
     ctx.fillStyle = grad;
 
-    // Slightly wavy ground line for hand-drawn feel
+    // Wavy ground surface
     ctx.beginPath();
     ctx.moveTo(0, groundY);
-    for (let x = 0; x <= w; x += 4) {
+    for (let x = 0; x <= w; x += 8) {
       const worldX = x + camera.x;
       const wobble = Math.sin(worldX * 0.05) * 1.5 + Math.sin(worldX * 0.13) * 0.8;
       ctx.lineTo(x, groundY + wobble);
     }
+    // Ground line emphasis (ink edge)
+    ctx.save();
+    ctx.strokeStyle = PALETTE.OUTLINE;
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+    ctx.restore();
+
+    // Close and fill ground depth
     ctx.lineTo(w, h);
     ctx.lineTo(0, h);
     ctx.closePath();
     ctx.fill();
-
-    // Ground line emphasis (ink edge)
-    ctx.strokeStyle = PALETTE.OUTLINE;
-    ctx.lineWidth = 2.5;
-    ctx.beginPath();
-    ctx.moveTo(0, groundY);
-    for (let x = 0; x <= w; x += 4) {
-      const worldX = x + camera.x;
-      const wobble = Math.sin(worldX * 0.05) * 1.5 + Math.sin(worldX * 0.13) * 0.8;
-      ctx.lineTo(x, groundY + wobble);
-    }
-    ctx.stroke();
   }
 
   /**
@@ -537,6 +534,8 @@ export class EnvironmentRenderer {
     const groundY = BALANCE.GROUND_Y;
     const grassAlpha = 0.4 + daylight * 0.3;
 
+    ctx.save();
+    ctx.globalAlpha = grassAlpha;
     ctx.strokeStyle = PALETTE.GRASS;
     ctx.lineWidth = 1.5;
     ctx.lineCap = 'round';
@@ -544,9 +543,6 @@ export class EnvironmentRenderer {
     for (const tuft of this._grassTufts) {
       const screenX = tuft.x - camera.x;
       if (screenX < -20 || screenX > ctx.canvas.width + 20) continue;
-
-      ctx.save();
-      ctx.globalAlpha = grassAlpha;
 
       // Draw 3-5 blades per tuft
       for (let b = -2; b <= 2; b++) {
@@ -563,9 +559,9 @@ export class EnvironmentRenderer {
         );
         ctx.stroke();
       }
-
-      ctx.restore();
     }
+
+    ctx.restore();
   }
 
   /**

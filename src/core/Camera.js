@@ -18,14 +18,14 @@ export class Camera {
     this.height = canvasHeight;
 
     /** Dead zone: fraction of screen width where camera doesn't move */
-    this.deadZone = 0.3;
+    this.deadZone = 0.18;
 
-    /** Smooth following factor (0 = no follow, 1 = snap) */
-    this.smoothing = 0.08;
+    /** Smooth following factor (higher responsiveness eliminates lag) */
+    this.smoothing = 0.16;
   }
 
   /**
-   * Update camera to follow a target position.
+   * Update camera to follow a target position with smooth, lag-free tracking.
    * @param {number} targetX - Target X in world coordinates (player center).
    * @param {number} targetY - Target Y in world coordinates.
    * @param {number} [customWorldWidth] - Current scene bounds width.
@@ -43,10 +43,10 @@ export class Camera {
 
     const dx = targetX - screenCenterX;
 
-    // Only move if outside dead zone
+    // Smooth continuous tracking outside dead zone without stuttering
     if (Math.abs(dx) > deadZonePixels) {
-      const targetCamX = targetX - this.width / 2;
-      this.x += (targetCamX - this.x) * this.smoothing;
+      const excess = dx > 0 ? (dx - deadZonePixels) : (dx + deadZonePixels);
+      this.x += excess * this.smoothing;
     }
 
     // Clamp camera to world bounds

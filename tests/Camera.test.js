@@ -47,4 +47,22 @@ describe('Camera', () => {
     expect(screenPos.x).toBe(100); // 700 - 600
     expect(screenPos.y).toBe(100);
   });
+
+  it('provides continuous non-stuttering tracking during sustained movement', () => {
+    const cam = new Camera(800, 600);
+    cam.snapTo(1000); // cam.x = 600, screen center = 1000
+
+    let playerX = 1150; // starts outside dead zone (800 * 0.18 / 2 = 72px)
+    let lastCamX = cam.x;
+
+    // Simulate 10 consecutive frames of player moving at 3px/frame
+    for (let frame = 0; frame < 10; frame++) {
+      playerX += 3;
+      cam.update(playerX, 0);
+      const camDelta = cam.x - lastCamX;
+      // Camera must move forward on EVERY single frame without freezing (delta > 0)
+      expect(camDelta).toBeGreaterThan(0);
+      lastCamX = cam.x;
+    }
+  });
 });
