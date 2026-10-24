@@ -744,12 +744,13 @@ export class Game {
    * @param {object} job
    */
   workJob(job) {
-    if (job.id === 'electrical_repair') {
-      if (this._activeModal) {
-        this._activeModal.close();
-        this._activeModal = null;
-      }
-      this.startCircuitRepairMiniGame('job_electrical_repair', job);
+    if (this._activeModal) {
+      this._activeModal.close();
+      this._activeModal = null;
+    }
+
+    if (job.mechanic) {
+      this.startJobMiniGame(job);
       return;
     }
 
@@ -772,6 +773,129 @@ export class Game {
         this.showNotification(`Completed shift: ${job.title}. Earned +$${pay}.`);
       }, 300);
     }, 350);
+  }
+
+  /**
+   * Launch mini-game corresponding to an employment contract.
+   * @param {object} job
+   */
+  startJobMiniGame(job) {
+    if (job.mechanic === 'connect_match') {
+      this.startCircuitRepairMiniGame(job.id, job);
+      return;
+    }
+
+    const skillLevel = this.player?.skills?.[job.skill] || 15;
+    const isSpecialist = job.requiredOccupation && this.player?.occupation === job.requiredOccupation;
+    const baseReward = job.getReward(this.player);
+    const durationMinutes = job.durationHours * 60;
+
+    const baseConfig = {
+      type: job.id,
+      mechanic: job.mechanic,
+      title: job.title,
+      subtitle: `Employment Contract — ${job.durationHours}h Shift`,
+      instructions: job.description,
+      baseDifficulty: 0.45,
+      skillLevel,
+      toolBonus: isSpecialist ? 0.15 : 0,
+      gameMinutesSpent: durationMinutes,
+      requiredMaterials: [],
+      rewardDefinition: {
+        money: baseReward,
+        skillExp: { skillName: job.skill || 'crafting', exp: 25 },
+      },
+    };
+
+    if (job.mechanic === 'timing_bar') {
+      import('../minigames/templates/TimingBarTemplate.js').then(({ TimingBarTemplate }) => {
+        this.miniGameManager.launchActivity(baseConfig, (stageEl, derivedParams, submitFn, cancelFn) => {
+          TimingBarTemplate.mount(stageEl, derivedParams, {
+            activityType: job.id,
+            gameMinutesSpent: durationMinutes,
+            onSubmit: (result) => this._handleJobMiniGameResult(job, result, submitFn),
+            onCancel: cancelFn,
+            setFeedback: (msg, type) => this.miniGameManager.activeOverlay?.setFeedback(msg, type),
+            setProgress: (pct, label) => this.miniGameManager.activeOverlay?.setProgress(pct, label),
+            setActionButton: (label, onClick) => this.miniGameManager.activeOverlay?.setActionButton(label, onClick),
+          });
+        });
+      });
+    } else if (job.mechanic === 'ordered_sequence') {
+      const customSteps = job.id === 'freelance_article'
+        ? [
+            { id: 'rumors', label: '1. Sift Regional Rumors', icon: '🎙️', tip: 'Gather field reports' },
+            { id: 'draft', label: '2. Draft Manuscript', icon: '📝', tip: 'Compose editorial thesis' },
+            { id: 'verify', label: '3. Fact-Check Wire Dispatches', icon: '📰', tip: 'Verify official statements' },
+            { id: 'publish', label: '4. Print Broadsheet Column', icon: '🖨️', tip: 'Typeset and distribute' },
+          ]
+        : [
+            { id: 'clean', label: '1. Cleanse Trauma Wound', icon: '🧴', tip: 'Irrigate with saline' },
+            { id: 'antiseptic', label: '2. Apply Antiseptic', icon: '🧪', tip: 'Prevent bacterial spread' },
+            { id: 'suture', label: '3. Suture Deep Cut', icon: '🪡', tip: 'Close open incision' },
+            { id: 'bandage', label: '4. Wrap Sterile Bandage', icon: '🩹', tip: 'Seal against infection' },
+          ];
+
+      import('../minigames/templates/OrderedSequenceTemplate.js').then(({ OrderedSequenceTemplate }) => {
+        this.miniGameManager.launchActivity(baseConfig, (stageEl, derivedParams, submitFn, cancelFn) => {
+          OrderedSequenceTemplate.mount(stageEl, derivedParams, {
+            activityType: job.id,
+            steps: customSteps,
+            gameMinutesSpent: durationMinutes,
+            onSubmit: (result) => this._handleJobMiniGameResult(job, result, submitFn),
+            onCancel: cancelFn,
+            setFeedback: (msg, type) => this.miniGameManager.activeOverlay?.setFeedback(msg, type),
+            setProgress: (pct, label) => this.miniGameManager.activeOverlay?.setProgress(pct, label),
+            setActionButton: (label, onClick) => this.miniGameManager.activeOverlay?.setActionButton(label, onClick),
+          });
+        });
+      });
+    } else if (job.mechanic === 'grid_selection') {
+      import('../minigames/templates/GridSelectionTemplate.js').then(({ GridSelectionTemplate }) => {
+        this.miniGameManager.launchActivity(baseConfig, (stageEl, derivedParams, submitFn, cancelFn) => {
+          GridSelectionTemplate.mount(stageEl, derivedParams, {
+            activityType: job.id,
+            gameMinutesSpent: durationMinutes,
+            onSubmit: (result) => this._handleJobMiniGameResult(job, result, submitFn),
+            onCancel: cancelFn,
+            setFeedback: (msg, type) => this.miniGameManager.activeOverlay?.setFeedback(msg, type),
+            setProgress: (pct, label) => this.miniGameManager.activeOverlay?.setProgress(pct, label),
+            setActionButton: (label, onClick) => this.miniGameManager.activeOverlay?.setActionButton(label, onClick),
+          });
+        });
+      });
+    } else if (job.mechanic === 'pack_fit') {
+      import('../minigames/templates/PackFitTemplate.js').then(({ PackFitTemplate }) => {
+        this.miniGameManager.launchActivity(baseConfig, (stageEl, derivedParams, submitFn, cancelFn) => {
+          PackFitTemplate.mount(stageEl, derivedParams, {
+            activityType: job.id,
+            gameMinutesSpent: durationMinutes,
+            onSubmit: (result) => this._handleJobMiniGameResult(job, result, submitFn),
+            onCancel: cancelFn,
+            setFeedback: (msg, type) => this.miniGameManager.activeOverlay?.setFeedback(msg, type),
+            setProgress: (pct, label) => this.miniGameManager.activeOverlay?.setProgress(pct, label),
+            setActionButton: (label, onClick) => this.miniGameManager.activeOverlay?.setActionButton(label, onClick),
+          });
+        });
+      });
+    }
+  }
+
+  /**
+   * Common handler for employment mini-game completion.
+   * @private
+   */
+  _handleJobMiniGameResult(job, result, submitFn) {
+    const receipt = submitFn(result);
+    if (receipt.success && receipt.outcome === 'success') {
+      this.needs.fatigue = Math.min(100, this.needs.fatigue + job.fatigueCost);
+      if (this.sound) this.sound.playCash();
+      const earned = receipt.grantedRewards?.money || job.getReward(this.player);
+      this.showNotification(`Contract fulfilled: ${job.title}! Payout: +$${earned} (${receipt.qualityTier.toUpperCase()} tier).`);
+    } else if (receipt.outcome === 'failure') {
+      this.needs.fatigue = Math.min(100, this.needs.fatigue + Math.round(job.fatigueCost / 2));
+      this.showNotification(`Contract incomplete: ${job.title}. Work shift concluded prematurely.`);
+    }
   }
 
   /**
