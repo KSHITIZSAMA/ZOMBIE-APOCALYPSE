@@ -223,4 +223,55 @@ describe('ClockSystem', () => {
       expect(clock.hour).toBe(6);
     });
   });
+
+  describe('advanceHours & analog clock hand angles', () => {
+    it('advances full hours accurately', () => {
+      clock.hour = 6;
+      clock.minute = 0;
+      clock.advanceHours(8); // 8-hour sleep
+      expect(clock.hour).toBe(14);
+      expect(clock.minute).toBe(0);
+    });
+
+    it('advances fractional hours across day boundaries', () => {
+      clock.hour = 22;
+      clock.minute = 30;
+      clock.advanceHours(2.5); // 2 hours 30 mins -> Day 2, 01:00
+      expect(clock.day).toBe(2);
+      expect(clock.hour).toBe(1);
+      expect(clock.minute).toBe(0);
+    });
+
+    it('calculates hour hand rotation degrees correctly (30 deg / hour)', () => {
+      clock.hour = 12;
+      clock.minute = 0;
+      expect(clock.getHourHandAngle()).toBe(0);
+
+      clock.hour = 3;
+      clock.minute = 0;
+      expect(clock.getHourHandAngle()).toBe(90);
+
+      clock.hour = 6;
+      clock.minute = 0;
+      expect(clock.getHourHandAngle()).toBe(180);
+
+      clock.hour = 6;
+      clock.minute = 30; // 6.5 hours = 195 deg
+      expect(clock.getHourHandAngle()).toBe(195);
+    });
+
+    it('calculates minute hand rotation degrees correctly (6 deg / minute)', () => {
+      clock.minute = 0;
+      expect(clock.getMinuteHandAngle()).toBe(0);
+
+      clock.minute = 15;
+      expect(clock.getMinuteHandAngle()).toBe(90);
+
+      clock.minute = 30;
+      expect(clock.getMinuteHandAngle()).toBe(180);
+
+      clock.minute = 45;
+      expect(clock.getMinuteHandAngle()).toBe(270);
+    });
+  });
 });

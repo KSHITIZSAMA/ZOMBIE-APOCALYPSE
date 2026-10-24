@@ -112,13 +112,19 @@ export class Game {
     this._pauseOverlay = document.getElementById('pause-overlay');
     this._btnContinue = document.getElementById('btn-continue-game');
     this._hud = document.getElementById('hud');
-    this._btnHudAudio = document.getElementById('btn-hud-audio');
-    this._hudDay = document.getElementById('hud-day');
-    this._hudTime = document.getElementById('hud-time');
-    this._hudMoney = document.getElementById('hud-money');
-    this._hudLocation = document.getElementById('hud-location');
-    this._hudName = document.getElementById('hud-name');
-    this._toast = document.getElementById('notification-toast');
+    this._btnHudAudio = typeof document !== 'undefined' ? document.getElementById('btn-hud-audio') : null;
+    this._hudDay = typeof document !== 'undefined' ? document.getElementById('hud-day') : null;
+    this._hudTime = typeof document !== 'undefined' ? document.getElementById('hud-time') : null;
+    this._clockHandHour = typeof document !== 'undefined' ? document.getElementById('clock-hand-hour') : null;
+    this._clockHandMinute = typeof document !== 'undefined' ? document.getElementById('clock-hand-minute') : null;
+    this._topRightClock = typeof document !== 'undefined' ? document.getElementById('top-right-clock') : null;
+    this._sleepOverlay = typeof document !== 'undefined' ? document.getElementById('sleep-overlay') : null;
+    this._sleepProgressFill = typeof document !== 'undefined' ? document.getElementById('sleep-progress-fill') : null;
+    this.isSleeping = false;
+    this._hudMoney = typeof document !== 'undefined' ? document.getElementById('hud-money') : null;
+    this._hudLocation = typeof document !== 'undefined' ? document.getElementById('hud-location') : null;
+    this._hudName = typeof document !== 'undefined' ? document.getElementById('hud-name') : null;
+    this._toast = typeof document !== 'undefined' ? document.getElementById('notification-toast') : null;
     this._toastTimer = null;
 
     // Needs meter bars
@@ -1174,42 +1180,122 @@ export class Game {
 
   /**
    * Sleep to rest, with Scheduled-Event Protection against skipping.
-   * @param {number} hours
+   * Skips time smoothly under 5 seconds (5.0s for 8 hours) with fast-forward clock.
+   * @param {number} [hours=8] - Hours to sleep.
+   * @param {object} [options={}] - Config overrides (e.g. { immediate: boolean }).
    */
-  sleep(hours = 8) {
+  sleep(hours = 8, options = {}) {
+    if (this.isSleeping) return;
+
     // Check if any scheduled warning event falls inside this sleep interval
     const pending = this.eventManager.findEventInInterval(this.clock.day, this.clock.hour, hours);
+    const targetHours = pending ? pending.hoursUntilEvent : hours;
 
-    const fadeEl = document.getElementById('screen-fade');
-    if (fadeEl) fadeEl.classList.add('active');
-
-    setTimeout(() => {
+    if (targetHours <= 0) {
       if (pending) {
-        // Sleep interrupted at the exact hour of the scheduled event!
-        const advanceHours = pending.hoursUntilEvent;
-        this.clock.advanceHours(advanceHours);
-        this.needs.advanceHours(advanceHours, this.player.traits);
-        this.farmingSystem.advanceHours(advanceHours);
-        this._updateHUD();
+        this.triggerEvent(pending.event.id);
+      }
+      return;
+    }
 
-        setTimeout(() => {
-          if (fadeEl) fadeEl.classList.remove('active');
-          this.showNotification('Your rest was interrupted by an urgent event!');
-          this.triggerEvent(pending.event.id);
-        }, 300);
+    // In unit tests or headless environments without requestAnimationFrame, allow immediate resolution
+    const isHeadless = options.immediate || typeof window === 'undefined' || typeof requestAnimationFrame !== 'function';
+    if (isHeadless) {
+      if (pending) {
+        this.clock.advanceHours(targetHours);
+        this.needs.advanceHours(targetHours, this.player?.traits || []);
+        this.farmingSystem.advanceHours(targetHours);
+        this._updateHUD();
+        this.showNotification('Your rest was interrupted by an urgent event!');
+        this.triggerEvent(pending.event.id);
       } else {
-        // Full uninterrupted sleep
         this.clock.advanceHours(hours);
-        this.needs.sleep(hours, this.player.traits);
+        this.needs.sleep(hours, this.player?.traits || []);
         this.farmingSystem.advanceHours(hours);
         this._updateHUD();
-
-        setTimeout(() => {
-          if (fadeEl) fadeEl.classList.remove('active');
-          this.showNotification(`You awaken feeling rested. ${hours} hours have passed.`);
-        }, 300);
+        this.showNotification(`You awaken feeling rested. ${hours} hours have passed.`);
       }
-    }, 350);
+      return;
+    }
+
+    // Begin fast-forward sleep animation
+    this.isSleeping = true;
+
+    // 8 hours maps to 5.0 seconds (under 5 seconds / exactly 5.0s); shorter intervals scale down proportionally
+    const baseDurationSec = 5.0;
+    const duration = Math.min(baseDurationSec, Math.max(0.8, (targetHours / 8) * baseDurationSec));
+
+    const sleepOverlay = typeof document !== 'undefined' ? document.getElementById('sleep-overlay') : null;
+    const progressFill = typeof document !== 'undefined' ? document.getElementById('sleep-progress-fill') : null;
+    const clockWidget = typeof document !== 'undefined' ? document.getElementById('top-right-clock') : null;
+
+    if (sleepOverlay) sleepOverlay.classList.remove('hidden');
+    if (clockWidget) clockWidget.classList.add('clock-sleeping-active');
+    if (progressFill) progressFill.style.width = '0%';
+
+    const initialFatigue = this.needs.fatigue;
+    const traits = this.player?.traits || [];
+    let hungerMult = 0.5;
+    let thirstMult = 0.5;
+    if (traits.includes('hardy')) hungerMult *= 0.85;
+    if (traits.includes('high_metabolism')) {
+      hungerMult *= 1.20;
+      thirstMult *= 1.20;
+    }
+
+    let elapsed = 0;
+    let lastTime = performance.now();
+    let accumulatedHours = 0;
+
+    const step = (now) => {
+      if (!this.isSleeping) return;
+
+      const deltaMs = Math.min(100, Math.max(0, now - lastTime));
+      lastTime = now;
+      elapsed += deltaMs / 1000;
+
+      const progress = Math.min(1, elapsed / duration);
+      const targetHoursSoFar = targetHours * progress;
+      const dHours = Math.max(0, targetHoursSoFar - accumulatedHours);
+      accumulatedHours = targetHoursSoFar;
+
+      if (dHours > 0) {
+        this.clock.advanceHours(dHours);
+        this.farmingSystem.advanceHours(dHours);
+
+        this.needs.hunger = Math.min(100, this.needs.hunger + BALANCE.HUNGER_RATE * hungerMult * dHours);
+        this.needs.thirst = Math.min(100, this.needs.thirst + BALANCE.THIRST_RATE * thirstMult * dHours);
+        this.needs.health = Math.min(100, this.needs.health + 2.0 * dHours);
+        this.needs.fatigue = Math.max(0, initialFatigue * (1 - progress));
+      }
+
+      if (progressFill) {
+        progressFill.style.width = `${progress * 100}%`;
+      }
+
+      this._updateHUD();
+
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      } else {
+        // Sleep completed!
+        this.isSleeping = false;
+        if (sleepOverlay) sleepOverlay.classList.add('hidden');
+        if (clockWidget) clockWidget.classList.remove('clock-sleeping-active');
+
+        if (pending) {
+          this.showNotification('Your rest was interrupted by an urgent event!');
+          this.triggerEvent(pending.event.id);
+        } else {
+          this.needs.fatigue = 0;
+          this.showNotification(`You awaken feeling rested. ${hours} hours have passed.`);
+        }
+        this._updateHUD();
+        if (options.onComplete) options.onComplete();
+      }
+    };
+
+    requestAnimationFrame(step);
   }
 
   /**
@@ -1653,6 +1739,18 @@ export class Game {
       const scene = this.sceneManager.getCurrentSceneConfig();
       const isInterior = this.sceneManager.currentScene === SceneType.INTERIOR;
 
+      // When fast-forward sleeping, player is resting safely and time is simulated by the sleep loop
+      if (this.isSleeping) {
+        if (this.camera) {
+          const size = this.renderer.getLogicalSize();
+          this.camera.resize(size.width, size.height);
+          this.camera.update(this.player.x, this.player.y, scene.worldWidth);
+        }
+        this.gameTime += dt;
+        this.input.endFrame();
+        return;
+      }
+
       // Check player health
       if (this.needs.health <= 0) {
         this.triggerGameOver('Succumbed to mortal wounds and severe exhaustion.');
@@ -1794,6 +1892,20 @@ export class Game {
   _updateHUD() {
     if (this._hudDay) this._hudDay.textContent = this.clock.getDayString();
     if (this._hudTime) this._hudTime.textContent = this.clock.getTimeString();
+
+    if (this._clockHandHour) {
+      const hourAngle = typeof this.clock.getHourHandAngle === 'function'
+        ? this.clock.getHourHandAngle()
+        : (((this.clock.hour % 12) * 60 + this.clock.minute) / 720) * 360;
+      this._clockHandHour.setAttribute('transform', `rotate(${hourAngle} 50 50)`);
+    }
+    if (this._clockHandMinute) {
+      const minAngle = typeof this.clock.getMinuteHandAngle === 'function'
+        ? this.clock.getMinuteHandAngle()
+        : (this.clock.minute / 60) * 360;
+      this._clockHandMinute.setAttribute('transform', `rotate(${minAngle} 50 50)`);
+    }
+
     if (this._hudMoney) this._hudMoney.textContent = `$${this.money}`;
     if (this._hudLocation) {
       const scene = this.sceneManager.getCurrentSceneConfig();

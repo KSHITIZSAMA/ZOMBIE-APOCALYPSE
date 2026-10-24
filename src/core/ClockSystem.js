@@ -57,6 +57,19 @@ export class ClockSystem {
   }
 
   /**
+   * Advance by a specified number of game-hours.
+   * Used for sleep, job shifts, and time skipping.
+   * @param {number} hours - Game hours to advance.
+   * @returns {{ minutesAdvanced: number, dayChanged: boolean }}
+   */
+  advanceHours(hours) {
+    if (!Number.isFinite(hours) || hours < 0) {
+      return { minutesAdvanced: 0, dayChanged: false };
+    }
+    return this._advanceMinutes(hours * 60);
+  }
+
+  /**
    * Internal: advance clock by fractional game minutes.
    * @param {number} mins
    * @returns {{ minutesAdvanced: number, dayChanged: boolean }}
@@ -121,6 +134,28 @@ export class ClockSystem {
    */
   getDayString() {
     return `Day ${this.day}`;
+  }
+
+  /**
+   * Get the rotation angle in degrees for the analog clock's hour hand (0-360).
+   * 0° / 360° is 12:00, 90° is 3:00, 180° is 6:00, 270° is 9:00.
+   * Smoothly interpolates based on elapsed minutes.
+   * @returns {number}
+   */
+  getHourHandAngle() {
+    const totalMinutesIn12HourCycle = ((this.hour % 12) * 60) + this.minute + this._fractionalMinutes;
+    return (totalMinutesIn12HourCycle / 720) * 360;
+  }
+
+  /**
+   * Get the rotation angle in degrees for the analog clock's minute hand (0-360).
+   * 0° / 360° is 0 min, 90° is 15 min, 180° is 30 min, 270° is 45 min.
+   * Smoothly interpolates based on fractional minutes.
+   * @returns {number}
+   */
+  getMinuteHandAngle() {
+    const totalMinutes = this.minute + this._fractionalMinutes;
+    return (totalMinutes / 60) * 360;
   }
 
   /**

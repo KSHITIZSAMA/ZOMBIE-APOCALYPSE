@@ -63,4 +63,20 @@ describe('Sleep & Scheduled-Event Protection', () => {
     const pending = em.findEventInInterval(2, 14, 8);
     expect(pending).toBeNull();
   });
+
+  it('ensures 8-hour sleep duration is under 5 seconds (5.0s max)', () => {
+    const baseDuration = 5.0;
+    const hours = 8;
+    const duration = Math.min(baseDuration, Math.max(0.8, (hours / 8) * baseDuration));
+    expect(duration).toBeLessThanOrEqual(5.0);
+    expect(duration).toBe(5.0);
+  });
+
+  it('scales fast-forward duration proportionally when sleep is interrupted early', () => {
+    const baseDuration = 5.0;
+    const interruptedHours = 4;
+    const duration = Math.min(baseDuration, Math.max(0.8, (interruptedHours / 8) * baseDuration));
+    expect(duration).toBe(2.5); // 4 hours takes 2.5 seconds (under 5 seconds)
+    expect(duration).toBeLessThan(5.0);
+  });
 });

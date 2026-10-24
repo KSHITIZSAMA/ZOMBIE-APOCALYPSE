@@ -284,7 +284,7 @@ html, body {
   top: 0;
   left: 0;
   right: 0;
-  z-index: 50;
+  z-index: 80;
   pointer-events: none;
 }
 
@@ -292,7 +292,24 @@ html, body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--space-md) var(--space-lg);
+  padding: var(--space-sm) var(--space-md);
+}
+
+.hud-left-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.hud-location-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.hud-location-icon {
+  font-size: 1.1rem;
 }
 
 .hud-clock {
@@ -303,18 +320,226 @@ html, body {
 
 .hud-label {
   font-family: var(--font-display);
-  font-size: 1.4rem;
+  font-size: 1.3rem;
   color: var(--color-paper);
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
   padding: var(--space-xs) var(--space-sm);
-  background: rgba(0, 0, 0, 0.35);
+  background: rgba(0, 0, 0, 0.45);
   border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* --- Top-Right Hand-Drawn Clock --- */
+.top-right-clock {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 14px 4px 6px;
+  background: rgba(14, 16, 22, 0.88);
+  border: 1.5px solid rgba(138, 123, 102, 0.45);
+  border-radius: 40px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6), inset 0 0 12px rgba(0, 0, 0, 0.35);
+  pointer-events: auto;
+  user-select: none;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.3s ease, box-shadow 0.3s ease;
+  z-index: 95;
+}
+
+.top-right-clock:hover {
+  border-color: rgba(201, 152, 62, 0.7);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.75), 0 0 10px rgba(201, 152, 62, 0.25);
+}
+
+.top-right-clock.clock-sleeping-active {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 24px rgba(201, 152, 62, 0.65), inset 0 0 16px rgba(201, 152, 62, 0.3);
+  transform: scale(1.08);
+  animation: clockPulse 1.2s infinite alternate ease-in-out;
+}
+
+@keyframes clockPulse {
+  0% { box-shadow: 0 0 16px rgba(201, 152, 62, 0.45); }
+  100% { box-shadow: 0 0 28px rgba(201, 152, 62, 0.85); }
+}
+
+.clock-analog-frame {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.clock-dial-svg {
+  width: 56px;
+  height: 56px;
+  overflow: visible;
+}
+
+.dial-casing {
+  fill: #1a1c22;
+  stroke: #7d6e59;
+  stroke-width: 2.5;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.7));
+}
+
+.dial-face {
+  fill: #111317;
+  stroke: #33322d;
+  stroke-width: 1;
+}
+
+.dial-tick.major {
+  stroke: #f3efe6;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+
+.dial-tick.minor {
+  stroke: #6b6355;
+  stroke-width: 1.2;
+  stroke-linecap: round;
+}
+
+.dial-hand.hand-hour {
+  stroke: #f3efe6;
+  stroke-width: 3.2;
+  stroke-linecap: round;
+}
+
+.dial-hand.hand-minute {
+  stroke: #c9983e;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+
+.dial-pin {
+  fill: #c9983e;
+  stroke: #0e1014;
+  stroke-width: 1.5;
+}
+
+.clock-digital-box {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  min-width: 58px;
+}
+
+.clock-digital-time {
+  font-family: var(--font-display);
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: #f3efe6;
+  line-height: 1;
+  letter-spacing: 0.05em;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85);
+}
+
+.clock-digital-day {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #a19788;
+  letter-spacing: 0.08em;
+  margin-top: 2px;
+}
+
+/* --- Sleeping Fast-Forward Vignette Overlay --- */
+.sleep-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  opacity: 1;
+  transition: opacity 400ms ease;
+}
+
+.sleep-overlay.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sleep-backdrop {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, rgba(8, 10, 16, 0.75) 0%, rgba(2, 3, 5, 0.95) 100%);
+  backdrop-filter: blur(2px);
+}
+
+.sleep-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  color: var(--color-paper);
+  animation: sleepBreath 2.2s infinite ease-in-out;
+}
+
+@keyframes sleepBreath {
+  0%, 100% {
+    transform: scale(0.98);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scale(1.02);
+    opacity: 1;
+  }
+}
+
+.sleep-icon {
+  font-size: 3rem;
+  margin-bottom: 8px;
+  filter: drop-shadow(0 0 14px rgba(201, 152, 62, 0.5));
+}
+
+.sleep-status {
+  font-family: var(--font-display);
+  font-size: 2.4rem;
+  color: #e6e1d6;
+  letter-spacing: 0.04em;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
+}
+
+.sleep-subtext {
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  color: #9c9587;
+  margin-top: 4px;
+}
+
+.sleep-progress-track {
+  width: 240px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  margin-top: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.sleep-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #7d6e59, #c9983e);
+  border-radius: 3px;
+  transition: width 0.05s linear;
 }
 
 /* --- Debug Panel --- */
 .debug-panel {
   position: absolute;
-  top: var(--space-md);
+  top: 80px;
   right: var(--space-md);
   z-index: 200;
   background: rgba(10, 12, 16, 0.92);

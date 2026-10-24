@@ -17,19 +17,68 @@
     <!-- Screen Fade Transition Overlay -->
     <div id="screen-fade"></div>
 
+    <!-- Sleep Fast-Forward Vignette Overlay -->
+    <div id="sleep-overlay" class="sleep-overlay hidden">
+      <div class="sleep-backdrop"></div>
+      <div class="sleep-content">
+        <div class="sleep-icon">🌙</div>
+        <div class="sleep-status">Resting...</div>
+        <div class="sleep-subtext">Fast-forwarding hours</div>
+        <div class="sleep-progress-track">
+          <div id="sleep-progress-fill" class="sleep-progress-fill"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- HUD Overlay -->
     <div id="hud" class="hud hidden">
       <div class="hud-top-bar">
-        <div class="hud-clock">
-          <span id="hud-day" class="hud-label">Day 1</span>
-          <span id="hud-time" class="hud-label">06:00</span>
-          <span id="hud-location" class="hud-label">Suncrest Ranch</span>
+        <div class="hud-left-group">
+          <div class="hud-location-badge">
+            <span class="hud-location-icon">📍</span>
+            <span id="hud-location" class="hud-label">Suncrest Ranch</span>
+          </div>
+          <div class="hud-status">
+            <span id="hud-name" class="hud-label">Survivor</span>
+            <span id="hud-money" class="hud-label">$500</span>
+            <button id="btn-hud-audio" class="hud-btn" title="Toggle Sound">🔊</button>
+            <button id="btn-hud-inv" class="hud-btn" title="Open Inventory (I)">🎒 Pack</button>
+          </div>
         </div>
-        <div class="hud-status">
-          <span id="hud-name" class="hud-label">Survivor</span>
-          <span id="hud-money" class="hud-label">$500</span>
-          <button id="btn-hud-audio" class="hud-btn" title="Toggle Sound">🔊</button>
-          <button id="btn-hud-inv" class="hud-btn" title="Open Inventory (I)">🎒 Pack</button>
+
+        <!-- Clock on the top right corner -->
+        <div id="top-right-clock" class="top-right-clock" title="World Clock">
+          <div class="clock-analog-frame">
+            <svg class="clock-dial-svg" viewBox="0 0 100 100" width="56" height="56">
+              <!-- Outer casing & dial face -->
+              <circle cx="50" cy="50" r="47" class="dial-casing" />
+              <circle cx="50" cy="50" r="43" class="dial-face" />
+              <!-- Major 12, 3, 6, 9 ticks -->
+              <line x1="50" y1="9" x2="50" y2="17" class="dial-tick major" />
+              <line x1="91" y1="50" x2="83" y2="50" class="dial-tick major" />
+              <line x1="50" y1="91" x2="50" y2="83" class="dial-tick major" />
+              <line x1="9" y1="50" x2="17" y2="50" class="dial-tick major" />
+              <!-- Minor hour ticks (1, 2, 4, 5, 7, 8, 10, 11) -->
+              <line x1="71.5" y1="12.8" x2="68" y2="18.8" class="dial-tick minor" />
+              <line x1="87.2" y1="28.5" x2="81.2" y2="32" class="dial-tick minor" />
+              <line x1="87.2" y1="71.5" x2="81.2" y2="68" class="dial-tick minor" />
+              <line x1="71.5" y1="87.2" x2="68" y2="81.2" class="dial-tick minor" />
+              <line x1="28.5" y1="87.2" x2="32" y2="81.2" class="dial-tick minor" />
+              <line x1="12.8" y1="71.5" x2="18.8" y2="68" class="dial-tick minor" />
+              <line x1="12.8" y1="28.5" x2="18.8" y2="32" class="dial-tick minor" />
+              <line x1="28.5" y1="12.8" x2="32" y2="18.8" class="dial-tick minor" />
+              <!-- Hour Hand -->
+              <line id="clock-hand-hour" x1="50" y1="50" x2="50" y2="25" class="dial-hand hand-hour" />
+              <!-- Minute Hand -->
+              <line id="clock-hand-minute" x1="50" y1="50" x2="50" y2="13" class="dial-hand hand-minute" />
+              <!-- Center Pivot Pin -->
+              <circle cx="50" cy="50" r="3.5" class="dial-pin" />
+            </svg>
+          </div>
+          <div class="clock-digital-box">
+            <span id="hud-time" class="clock-digital-time">06:00</span>
+            <span id="hud-day" class="clock-digital-day">Day 1</span>
+          </div>
         </div>
       </div>
       <!-- Needs Status Bars -->
