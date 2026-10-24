@@ -45,6 +45,14 @@ export class InteriorRenderer {
       width: 60,
       height: 65,
     };
+
+    /** Electrical Breaker Panel */
+    this.breakerPanel = {
+      x: 655,
+      y: 360,
+      width: 32,
+      height: 44,
+    };
   }
 
   /**
@@ -142,7 +150,10 @@ export class InteriorRenderer {
     // 8. Exit Door
     this._drawDoor(ctx, camera, groundY);
 
-    // 9. Warm Interior Atmospheric Lighting Vignette
+    // 9. Electrical Fuse / Breaker Panel
+    this._drawBreakerBox(ctx, camera, groundY, gameTime);
+
+    // 10. Warm Interior Atmospheric Lighting Vignette
     this._drawAmbientLighting(ctx, camera, screenW, screenH, daylight);
 
     ctx.restore();
@@ -365,6 +376,47 @@ export class InteriorRenderer {
     ctx.fillStyle = PALETTE.INTERIOR_LIGHT;
     ctx.beginPath();
     ctx.arc(dx + dw - 6, dy + dh * 0.55, 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  /**
+   * Draw wall-mounted electrical breaker box.
+   */
+  _drawBreakerBox(ctx, camera, groundY, gameTime) {
+    const bx = this.breakerPanel.x - camera.x;
+    const by = this.breakerPanel.y;
+    const bw = this.breakerPanel.width;
+    const bh = this.breakerPanel.height;
+
+    // Metallic enclosure
+    ctx.fillStyle = '#3c444c';
+    ctx.fillRect(bx, by, bw, bh);
+    ctx.strokeStyle = PALETTE.OUTLINE;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(bx, by, bw, bh);
+
+    // Inner door inset
+    ctx.fillStyle = '#2d333a';
+    ctx.fillRect(bx + 3, by + 3, bw - 6, bh - 6);
+    ctx.strokeRect(bx + 3, by + 3, bw - 6, bh - 6);
+
+    // Hazard lightning symbol / label
+    ctx.fillStyle = '#e6ad61';
+    ctx.beginPath();
+    ctx.moveTo(bx + bw / 2, by + 10);
+    ctx.lineTo(bx + bw / 2 - 4, by + 20);
+    ctx.lineTo(bx + bw / 2, by + 20);
+    ctx.lineTo(bx + bw / 2 - 2, by + 30);
+    ctx.lineTo(bx + bw / 2 + 5, by + 18);
+    ctx.lineTo(bx + bw / 2 + 1, by + 18);
+    ctx.closePath();
+    ctx.fill();
+
+    // Power indicator LED (pulsing green)
+    const ledGlow = Math.sin(gameTime * 4) > 0 ? '#7ae668' : '#387830';
+    ctx.fillStyle = ledGlow;
+    ctx.beginPath();
+    ctx.arc(bx + bw - 6, by + 8, 2.5, 0, Math.PI * 2);
     ctx.fill();
   }
 

@@ -28,6 +28,7 @@ import { SoundSystem } from '../audio/SoundSystem.js';
 import { getOccupation } from '../data/occupations.js';
 import { getStoryEvent } from '../data/events.js';
 import { MiniGameManager } from '../minigames/MiniGameManager.js';
+import { getItem } from '../data/items.js';
 import { BALANCE } from '../data/balance.js';
 
 /** @enum {string} Game states */
@@ -255,12 +256,7 @@ export class Game {
               this.showNotification(`${plot.cropName} is growing well (~${remainingHours}h until harvest).`);
             }
           } else if (plot.state === 'mature') {
-            const res = this.farmingSystem.harvest(this.inventory, 0);
-            if (res.success) {
-              this.stats.cropsHarvested += (res.amount || 1);
-              this.sound.playClick();
-            }
-            this.showNotification(res.message);
+            this.startHarvestMiniGame(0);
           }
         },
       },
@@ -322,6 +318,13 @@ export class Game {
           this.needs.health = Math.min(100, this.needs.health + 5);
           this.showNotification('The gentle crackle and radiant heat comfort you.');
         },
+      },
+      {
+        id: 'breaker_panel',
+        x: 655,
+        width: 50,
+        label: 'Service Electrical Fuse Box',
+        action: () => this.startCircuitRepairMiniGame('interior_fuse_box'),
       },
       {
         id: 'bed',
@@ -720,6 +723,15 @@ export class Game {
    * @param {object} job
    */
   workJob(job) {
+    if (job.id === 'electrical_repair') {
+      if (this._activeModal) {
+        this._activeModal.close();
+        this._activeModal = null;
+      }
+      this.startCircuitRepairMiniGame('job_electrical_repair', job);
+      return;
+    }
+
     const fadeEl = document.getElementById('screen-fade');
     if (fadeEl) fadeEl.classList.add('active');
 
@@ -739,6 +751,125 @@ export class Game {
         this.showNotification(`Completed shift: ${job.title}. Earned +$${pay}.`);
       }, 300);
     }, 350);
+  }
+
+  /**
+   * Launch Harvest Timing Bar mini-game.
+   * @param {number} [plotIndex=0]
+   */
+  startHarvestMiniGame(plotIndex = 0) {
+    const plot = this.farmingSystem.getPlot(plotIndex);
+    if (!plot || plot.state !== 'mature') return;
+
+    const cropDef = getItem(plot.cropId);
+    const cropName = cropDef?.name || plot.cropName || 'Crop';
+    const baseYield = plot.yieldCount || 2;
+    const farmingSkill = this.player?.skills?.farming || 0;
+
+    import('../minigames/templates/TimingBarTemplate.js').then(({ TimingBarTemplate }) => {
+      this.miniGameManager.launchActivity({
+        type: 'harvest',
+        mechanic: 'timing_bar',
+        title: `Harvesting ${cropName}`,
+        subtitle: 'Agriculture — Ranch Garden',
+        instructions: 'Press SPACE or click STRIKE when the sickle needle aligns inside the green sweet spot.',
+        baseDifficulty: 0.45,
+        skillLevel: farmingSkill,
+        toolBonus: this.player?.occupation === 'farmer' ? 0.10 : 0,
+        gameMinutesSpent: 15,
+        requiredMaterials: [],
+        rewardDefinition: {
+          items: [{ itemId: plot.cropId, count: baseYield }],
+          skillExp: { skillName: 'farming', exp: 20 },
+        },
+      }, (stageEl, derivedParams, submitFn, cancelFn) => {
+        TimingBarTemplate.mount(stageEl, derivedParams, {
+          activityType: 'harvest',
+          gameMinutesSpent: 15,
+          onSubmit: (result) => {
+            const receipt = submitFn(result);
+            if (receipt.success && receipt.outcome === 'success') {
+              plot.state = 'tilled';
+              plot.cropId = null;
+              plot.cropName = null;
+              plot.growthHours = 0;
+              plot.isWatered = false;
+              const count = receipt.grantedRewards?.items?.[0]?.count || baseYield;
+              this.stats.cropsHarvested += count;
+              if (this.sound) this.sound.playClick();
+              this.showNotification(`Harvest complete! Collected ${count}x ${cropName} (${receipt.qualityTier.toUpperCase()} quality).`);
+            } else if (receipt.outcome === 'failure') {
+              plot.state = 'tilled';
+              plot.cropId = null;
+              plot.cropName = null;
+              plot.growthHours = 0;
+              plot.isWatered = false;
+              this.inventory.addItem(plot.cropId, 1);
+              this.stats.cropsHarvested += 1;
+              this.showNotification(`Harvest missed sweet spot. Salvaged 1x ${cropName}.`);
+            }
+          },
+          onCancel: cancelFn,
+          setFeedback: (msg, type) => this.miniGameManager.activeOverlay?.setFeedback(msg, type),
+          setProgress: (pct, label) => this.miniGameManager.activeOverlay?.setProgress(pct, label),
+          setActionButton: (label, onClick) => this.miniGameManager.activeOverlay?.setActionButton(label, onClick),
+        });
+      });
+    });
+  }
+
+  /**
+   * Launch Electrical Circuit Repair Connect & Match mini-game.
+   * @param {string} [contextId='fuse_box']
+   * @param {object} [job=null]
+   */
+  startCircuitRepairMiniGame(contextId = 'fuse_box', job = null) {
+    const electricalSkill = this.player?.skills?.electrical || 0;
+    const isElectrician = this.player?.occupation === 'electrician';
+
+    import('../minigames/templates/ConnectMatchTemplate.js').then(({ ConnectMatchTemplate }) => {
+      this.miniGameManager.launchActivity({
+        type: 'circuit_repair',
+        mechanic: 'connect_match',
+        title: job ? 'Grid Transformer Maintenance' : 'Fuse Box Circuit Diagnostic',
+        subtitle: 'Electrical — Wiring & Diagnostics',
+        instructions: 'Match matching terminals by clicking a left node and then its corresponding right circuit output.',
+        baseDifficulty: 0.50,
+        skillLevel: electricalSkill,
+        toolBonus: isElectrician ? 0.15 : 0,
+        gameMinutesSpent: job ? job.durationHours * 60 : 25,
+        requiredMaterials: [],
+        rewardDefinition: {
+          money: job ? job.getReward(this.player) : (isElectrician ? 45 : 20),
+          skillExp: { skillName: 'electrical', exp: 25 },
+        },
+      }, (stageEl, derivedParams, submitFn, cancelFn) => {
+        ConnectMatchTemplate.mount(stageEl, derivedParams, {
+          activityType: 'circuit_repair',
+          gameMinutesSpent: job ? job.durationHours * 60 : 25,
+          onSubmit: (result) => {
+            const receipt = submitFn(result);
+            if (receipt.success && receipt.outcome === 'success') {
+              if (job) {
+                this.needs.fatigue = Math.min(100, this.needs.fatigue + job.fatigueCost);
+              }
+              if (this.sound) this.sound.playCash();
+              const earned = receipt.grantedRewards?.money || (job ? job.getReward(this.player) : 20);
+              this.showNotification(`Circuits online! Payout: +$${earned} (${receipt.qualityTier.toUpperCase()} quality).`);
+            } else if (receipt.outcome === 'failure') {
+              if (job) {
+                this.needs.fatigue = Math.min(100, this.needs.fatigue + Math.round(job.fatigueCost / 2));
+              }
+              this.showNotification('Electrical short circuit! Breaker tripped without repair.');
+            }
+          },
+          onCancel: cancelFn,
+          setFeedback: (msg, type) => this.miniGameManager.activeOverlay?.setFeedback(msg, type),
+          setProgress: (pct, label) => this.miniGameManager.activeOverlay?.setProgress(pct, label),
+          setActionButton: (label, onClick) => this.miniGameManager.activeOverlay?.setActionButton(label, onClick),
+        });
+      });
+    });
   }
 
   /**

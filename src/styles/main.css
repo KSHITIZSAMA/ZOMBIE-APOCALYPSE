@@ -1720,5 +1720,224 @@ html, body {
   background: rgba(104, 116, 90, 0.35);
 }
 
+/* --- Timing Bar Template --- */
+.timing-bar-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.timing-bar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+}
+
+.timing-attempts-label strong {
+  color: var(--color-accent);
+}
+
+.timing-prompt-badge {
+  font-size: 0.78rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-sm);
+  padding: 2px 8px;
+  color: var(--color-paper);
+}
+
+.timing-track {
+  position: relative;
+  width: 100%;
+  height: 48px;
+  background: rgba(10, 12, 16, 0.95);
+  border: 2px solid rgba(230, 224, 210, 0.2);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.7);
+}
+
+.timing-track.shake {
+  animation: trackShake 0.3s ease;
+}
+
+@keyframes trackShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+
+.timing-target-zone {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: rgba(104, 116, 90, 0.45);
+  border-left: 2px solid rgba(120, 180, 100, 0.8);
+  border-right: 2px solid rgba(120, 180, 100, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 15px rgba(104, 116, 90, 0.3);
+}
+
+.timing-bullseye {
+  width: 35%;
+  height: 100%;
+  background: rgba(230, 173, 97, 0.45);
+  border-left: 1px dashed rgba(255, 240, 200, 0.9);
+  border-right: 1px dashed rgba(255, 240, 200, 0.9);
+}
+
+.timing-needle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: #ffffff;
+  transform: translateX(-50%);
+  box-shadow: 0 0 10px #ffffff, 0 0 20px var(--color-accent);
+  z-index: 10;
+  pointer-events: none;
+}
+
+.timing-needle-head {
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 8px solid #ffffff;
+}
+
+.timing-needle.hit-success {
+  background: #7ae668;
+  box-shadow: 0 0 18px #7ae668;
+}
+
+.timing-needle.hit-miss {
+  background: #ff6858;
+  box-shadow: 0 0 18px #ff6858;
+}
+
+/* --- Connect & Match Template --- */
+.connect-match-board {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  position: relative;
+}
+
+.circuit-instructions-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+}
+
+.circuit-mistakes-label strong {
+  color: #ff9990;
+}
+
+.circuit-status-count strong {
+  color: var(--color-accent);
+}
+
+.circuit-columns {
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+  position: relative;
+  min-height: 220px;
+}
+
+.circuit-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  z-index: 5;
+  width: 42%;
+}
+
+.circuit-center-space {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.circuit-wires-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.terminal-node {
+  background: rgba(22, 26, 32, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  cursor: pointer;
+  color: var(--color-paper);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  transition: all var(--transition-fast);
+  text-align: left;
+}
+
+.terminal-node-right {
+  text-align: right;
+}
+
+.terminal-pin {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--node-color, #e6ad61);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 6px var(--node-color);
+  flex-shrink: 0;
+}
+
+.terminal-node:hover {
+  background: rgba(40, 48, 58, 0.95);
+  border-color: var(--node-color, var(--color-accent));
+}
+
+.terminal-node.selected {
+  border-color: #ffffff;
+  background: rgba(50, 60, 72, 0.98);
+  box-shadow: 0 0 12px var(--node-color);
+}
+
+.terminal-node.connected {
+  border-color: rgba(104, 116, 90, 0.6);
+  background: rgba(30, 42, 32, 0.85);
+  opacity: 0.85;
+  cursor: default;
+}
+
+.terminal-node.error-pulse {
+  animation: nodeError 0.4s ease;
+  border-color: #ff5544;
+}
+
+@keyframes nodeError {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); background: rgba(169, 75, 67, 0.4); }
+}
+
+
 
 
