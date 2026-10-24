@@ -53,6 +53,27 @@ export class InteriorRenderer {
       width: 32,
       height: 44,
     };
+
+    /** Supply Storage Chest / Trunk */
+    this.storageChest = {
+      x: 175,
+      width: 44,
+      height: 28,
+    };
+
+    /** Kitchen Cooking Stove */
+    this.stove = {
+      x: 355,
+      width: 42,
+      height: 56,
+    };
+
+    /** Shortwave Radio on Table */
+    this.radio = {
+      x: 295,
+      width: 24,
+      height: 18,
+    };
   }
 
   /**
@@ -147,13 +168,22 @@ export class InteriorRenderer {
     // 7. Kitchen Table and Chair
     this._drawTable(ctx, camera, groundY, gameTime);
 
-    // 8. Exit Door
+    // 8. Supply Storage Locker / Trunk
+    this._drawStorageChest(ctx, camera, groundY);
+
+    // 9. Kitchen Cooking Stove
+    this._drawStove(ctx, camera, groundY, gameTime);
+
+    // 10. Shortwave Radio on Table
+    this._drawRadio(ctx, camera, groundY, gameTime);
+
+    // 11. Exit Door
     this._drawDoor(ctx, camera, groundY);
 
-    // 9. Electrical Fuse / Breaker Panel
+    // 12. Electrical Fuse / Breaker Panel
     this._drawBreakerBox(ctx, camera, groundY, gameTime);
 
-    // 10. Warm Interior Atmospheric Lighting Vignette
+    // 13. Warm Interior Atmospheric Lighting Vignette
     this._drawAmbientLighting(ctx, camera, screenW, screenH, daylight);
 
     ctx.restore();
@@ -436,4 +466,109 @@ export class InteriorRenderer {
     ctx.fillStyle = radial;
     ctx.fillRect(0, 0, screenW, screenH);
   }
+
+  /**
+   * Draw wooden supply storage chest / trunk.
+   */
+  _drawStorageChest(ctx, camera, groundY) {
+    const cx = this.storageChest.x - camera.x;
+    const cy = groundY - this.storageChest.height;
+    const cw = this.storageChest.width;
+    const ch = this.storageChest.height;
+
+    // Heavy oak box
+    ctx.fillStyle = '#4a382a';
+    ctx.fillRect(cx, cy, cw, ch);
+    ctx.strokeStyle = PALETTE.OUTLINE;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(cx, cy, cw, ch);
+
+    // Iron corner brackets
+    ctx.fillStyle = '#2d333a';
+    ctx.fillRect(cx, cy, 6, 6);
+    ctx.fillRect(cx + cw - 6, cy, 6, 6);
+    ctx.fillRect(cx, cy + ch - 6, 6, 6);
+    ctx.fillRect(cx + cw - 6, cy + ch - 6, 6, 6);
+
+    // Chest latch
+    ctx.fillStyle = '#c9a378';
+    ctx.fillRect(cx + cw / 2 - 4, cy + 8, 8, 8);
+    ctx.strokeRect(cx + cw / 2 - 4, cy + 8, 8, 8);
+  }
+
+  /**
+   * Draw cast-iron kitchen cooking stove.
+   */
+  _drawStove(ctx, camera, groundY, gameTime) {
+    const sx = this.stove.x - camera.x;
+    const sy = groundY - this.stove.height;
+    const sw = this.stove.width;
+    const sh = this.stove.height;
+
+    // Cast iron stove body
+    ctx.fillStyle = '#22262c';
+    ctx.fillRect(sx, sy, sw, sh);
+    ctx.strokeStyle = PALETTE.OUTLINE;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(sx, sy, sw, sh);
+
+    // Stovepipe chimney
+    ctx.fillStyle = '#1c1f24';
+    ctx.fillRect(sx + sw - 12, sy - 28, 8, 28);
+    ctx.strokeRect(sx + sw - 12, sy - 28, 8, 28);
+
+    // Firebox door with warm ember glow through grille
+    ctx.fillStyle = '#181b20';
+    ctx.fillRect(sx + 5, sy + sh - 28, sw - 10, 22);
+    ctx.strokeRect(sx + 5, sy + sh - 28, sw - 10, 22);
+
+    const emberGlow = Math.sin(gameTime * 5) > 0 ? '#e68045' : '#b85430';
+    ctx.fillStyle = emberGlow;
+    ctx.fillRect(sx + 8, sy + sh - 20, sw - 16, 6);
+
+    // Kettle / pot on cooktop
+    ctx.fillStyle = '#3a424a';
+    ctx.fillRect(sx + 6, sy - 10, 16, 10);
+    ctx.strokeRect(sx + 6, sy - 10, 16, 10);
+  }
+
+  /**
+   * Draw shortwave radio receiver on the kitchen table.
+   */
+  _drawRadio(ctx, camera, groundY, gameTime) {
+    const rx = this.radio.x - camera.x;
+    const ry = groundY - 42 - this.radio.height; // Resting on table surface (table height = 42)
+    const rw = this.radio.width;
+    const rh = this.radio.height;
+
+    // Olive-drab military casing
+    ctx.fillStyle = '#3a4435';
+    ctx.fillRect(rx, ry, rw, rh);
+    ctx.strokeStyle = PALETTE.OUTLINE;
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(rx, ry, rw, rh);
+
+    // Tuning dial window (green backlight)
+    ctx.fillStyle = '#1f3824';
+    ctx.fillRect(rx + 4, ry + 3, rw - 8, 6);
+    ctx.strokeRect(rx + 4, ry + 3, rw - 8, 6);
+
+    // Frequency needle
+    const dialPos = Math.sin(gameTime * 0.5) * 4 + 8;
+    ctx.strokeStyle = '#7ae668';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(rx + 4 + dialPos, ry + 3);
+    ctx.lineTo(rx + 4 + dialPos, ry + 9);
+    ctx.stroke();
+
+    // Antenna wire pointing upward
+    ctx.strokeStyle = '#22262c';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(rx + rw - 3, ry);
+    ctx.lineTo(rx + rw + 2, ry - 14);
+    ctx.stroke();
+  }
 }
+

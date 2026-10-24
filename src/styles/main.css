@@ -1938,6 +1938,365 @@ html, body {
   50% { transform: scale(1.05); background: rgba(169, 75, 67, 0.4); }
 }
 
+/* ==========================================================================
+   STAGE 3 — ORDERED SEQUENCE (COOKING & CLEANING)
+   ========================================================================== */
+.sequence-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  width: 100%;
+}
 
+.sequence-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  color: var(--color-paper-dim);
+}
 
+.sequence-fault-badge strong {
+  color: #ff9990;
+}
 
+.sequence-target-badge strong {
+  color: var(--color-accent);
+}
+
+.sequence-steps-timeline {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 6px 0;
+}
+
+.sequence-timeline-node {
+  flex: 1;
+  min-width: 75px;
+  background: rgba(20, 24, 30, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-sm);
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 3px;
+  transition: all var(--transition-fast);
+}
+
+.sequence-timeline-node.current {
+  border-color: var(--color-accent);
+  background: rgba(230, 173, 97, 0.15);
+  box-shadow: 0 0 10px rgba(230, 173, 97, 0.25);
+}
+
+.sequence-timeline-node.completed {
+  border-color: rgba(104, 116, 90, 0.8);
+  background: rgba(45, 65, 45, 0.6);
+  opacity: 0.8;
+}
+
+.timeline-step-num {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+.timeline-step-label {
+  font-size: 0.72rem;
+  color: var(--color-paper);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 85px;
+}
+
+.sequence-buttons-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+}
+
+.sequence-action-btn {
+  background: rgba(25, 30, 38, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 4px;
+  cursor: pointer;
+  color: var(--color-paper);
+  font-family: var(--font-body);
+  transition: all var(--transition-fast);
+}
+
+.sequence-action-btn:hover:not(:disabled) {
+  background: rgba(42, 50, 62, 0.98);
+  border-color: var(--color-accent);
+  transform: translateY(-2px);
+}
+
+.btn-step-icon {
+  font-size: 1.4rem;
+}
+
+.btn-step-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.btn-step-tip {
+  font-size: 0.72rem;
+  color: var(--color-paper-dim);
+}
+
+.sequence-action-btn.step-completed {
+  border-color: rgba(104, 116, 90, 0.6);
+  background: rgba(30, 45, 32, 0.75);
+  opacity: 0.55;
+  cursor: default;
+  transform: none;
+}
+
+.sequence-action-btn.error-shake {
+  animation: stepError 0.4s ease;
+  border-color: #ff5544;
+}
+
+@keyframes stepError {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+
+/* ==========================================================================
+   STAGE 3 — GRID SELECTION (RADIO TUNING & SCAVENGING)
+   ========================================================================== */
+.grid-selection-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  width: 100%;
+}
+
+.grid-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  color: var(--color-paper-dim);
+}
+
+.grid-probe-counter strong {
+  color: var(--color-accent);
+}
+
+.grid-status-badge strong {
+  color: #7ae668;
+}
+
+.radar-grid {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+}
+
+.radar-cell {
+  aspect-ratio: 1 / 1;
+  background: rgba(22, 28, 36, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+  color: var(--color-paper);
+  transition: all var(--transition-fast);
+  padding: 4px;
+}
+
+.radar-cell:hover:not(:disabled) {
+  background: rgba(38, 48, 62, 0.98);
+  border-color: var(--color-accent);
+  box-shadow: 0 0 8px rgba(230, 173, 97, 0.3);
+}
+
+.cell-signal-icon {
+  font-size: 1.15rem;
+}
+
+.cell-feedback-text {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.radar-cell.cell-target-found {
+  border-color: #7ae668;
+  background: rgba(45, 80, 45, 0.85);
+  box-shadow: 0 0 12px rgba(122, 230, 104, 0.45);
+}
+
+.radar-cell.cell-hot {
+  border-color: #ff7744;
+  background: rgba(90, 40, 25, 0.75);
+}
+
+.radar-cell.cell-warm {
+  border-color: #e6ad61;
+  background: rgba(65, 55, 30, 0.7);
+}
+
+.radar-cell.cell-cold {
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(18, 22, 28, 0.7);
+  opacity: 0.65;
+}
+
+/* ==========================================================================
+   STAGE 3 — PACK AND FIT (STORAGE & BACKPACK PACKING)
+   ========================================================================== */
+.pack-fit-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  width: 100%;
+}
+
+.pack-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pack-capacity-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  color: var(--color-paper-dim);
+}
+
+.pack-value-badge strong {
+  color: var(--color-accent);
+}
+
+.pack-capacity-bar-track {
+  height: 12px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.pack-capacity-fill {
+  height: 100%;
+  background: linear-gradient(to right, #58b5a0, #e6ad61);
+  border-radius: 6px;
+  transition: width 250ms ease;
+}
+
+.pack-capacity-fill.near-full {
+  background: linear-gradient(to right, #e6ad61, #d86860);
+}
+
+.pack-sections-wrapper {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
+}
+
+.pack-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.pack-section-title {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-paper-dim);
+  margin: 0;
+}
+
+.pack-items-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 160px;
+  max-height: 220px;
+  overflow-y: auto;
+  background: rgba(16, 20, 26, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-sm);
+  padding: 6px;
+}
+
+.pack-item-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  background: rgba(26, 32, 42, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  cursor: pointer;
+  color: var(--color-paper);
+  font-family: var(--font-body);
+  transition: all var(--transition-fast);
+  text-align: left;
+}
+
+.pack-item-card:hover {
+  background: rgba(42, 52, 68, 0.98);
+  border-color: var(--color-accent);
+}
+
+.pack-item-icon {
+  font-size: 1.25rem;
+}
+
+.pack-item-details {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.pack-item-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.pack-item-meta {
+  font-size: 0.72rem;
+  color: var(--color-paper-dim);
+}
+
+.pack-item-card.packed-card {
+  border-color: rgba(88, 181, 160, 0.6);
+  background: rgba(25, 45, 40, 0.85);
+}
+
+.pack-empty-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 140px;
+  color: var(--color-paper-dim);
+  font-size: 0.78rem;
+  font-style: italic;
+  text-align: center;
+  padding: var(--space-md);
+}

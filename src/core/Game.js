@@ -303,11 +303,32 @@ export class Game {
         },
       },
       {
+        id: 'storage_chest',
+        x: 175,
+        width: 44,
+        label: 'Organize Supply Trunk',
+        action: () => this.startPackingMiniGame(),
+      },
+      {
         id: 'table',
         x: 280,
         width: 70,
         label: 'Daily Work & Contracts',
         action: () => this.openJobs(),
+      },
+      {
+        id: 'radio',
+        x: 295,
+        width: 32,
+        label: 'Tune Shortwave Radio',
+        action: () => this.startRadioTuningMiniGame(),
+      },
+      {
+        id: 'stove',
+        x: 355,
+        width: 44,
+        label: 'Cook Country Stew',
+        action: () => this.startCookingMiniGame(),
       },
       {
         id: 'fireplace',
@@ -861,6 +882,147 @@ export class Game {
                 this.needs.fatigue = Math.min(100, this.needs.fatigue + Math.round(job.fatigueCost / 2));
               }
               this.showNotification('Electrical short circuit! Breaker tripped without repair.');
+            }
+          },
+          onCancel: cancelFn,
+          setFeedback: (msg, type) => this.miniGameManager.activeOverlay?.setFeedback(msg, type),
+          setProgress: (pct, label) => this.miniGameManager.activeOverlay?.setProgress(pct, label),
+          setActionButton: (label, onClick) => this.miniGameManager.activeOverlay?.setActionButton(label, onClick),
+        });
+      });
+    });
+  }
+
+  /**
+   * Launch Cooking Ordered Sequence mini-game.
+   */
+  startCookingMiniGame() {
+    const cookingSkill = this.player?.skills?.cooking || 15;
+    const hasVegetable = this.inventory.hasItem('corn', 1) || this.inventory.hasItem('tomato', 1);
+    const vegItemId = this.inventory.hasItem('corn', 1) ? 'corn' : (this.inventory.hasItem('tomato', 1) ? 'tomato' : null);
+
+    const requiredMaterials = vegItemId ? [{ itemId: vegItemId, count: 1 }] : [];
+
+    import('../minigames/templates/OrderedSequenceTemplate.js').then(({ OrderedSequenceTemplate }) => {
+      this.miniGameManager.launchActivity({
+        type: 'cooking',
+        mechanic: 'ordered_sequence',
+        title: vegItemId ? 'Cooking Hearty Garden Stew' : 'Boiling Ration Porridge',
+        subtitle: 'Culinary — Kitchen Cooking Stove',
+        instructions: 'Follow procedural cooking steps in the correct order to prepare a nourishing hot meal.',
+        baseDifficulty: 0.40,
+        skillLevel: cookingSkill,
+        toolBonus: this.player?.occupation === 'farmer' ? 0.10 : 0,
+        gameMinutesSpent: 25,
+        requiredMaterials,
+        rewardDefinition: {
+          skillExp: { skillName: 'cooking', exp: 20 },
+        },
+      }, (stageEl, derivedParams, submitFn, cancelFn) => {
+        OrderedSequenceTemplate.mount(stageEl, derivedParams, {
+          activityType: 'cooking',
+          gameMinutesSpent: 25,
+          onSubmit: (result) => {
+            const receipt = submitFn(result);
+            if (receipt.success && receipt.outcome === 'success') {
+              const hungerRelief = receipt.qualityTier === 'master' ? 45 : receipt.qualityTier === 'good' ? 35 : 25;
+              const healthRelief = receipt.qualityTier === 'master' ? 20 : 10;
+              this.needs.hunger = Math.max(0, this.needs.hunger - hungerRelief);
+              this.needs.health = Math.min(100, this.needs.health + healthRelief);
+              if (this.sound) this.sound.playClick();
+              this.showNotification(`Delicious meal cooked! Hunger reduced (-${hungerRelief}), Health restored (+${healthRelief}). Quality: ${receipt.qualityTier.toUpperCase()}.`);
+            } else if (receipt.outcome === 'failure') {
+              this.showNotification('Recipe burned! Food scorched over unmanaged heat.');
+            }
+          },
+          onCancel: cancelFn,
+          setFeedback: (msg, type) => this.miniGameManager.activeOverlay?.setFeedback(msg, type),
+          setProgress: (pct, label) => this.miniGameManager.activeOverlay?.setProgress(pct, label),
+          setActionButton: (label, onClick) => this.miniGameManager.activeOverlay?.setActionButton(label, onClick),
+        });
+      });
+    });
+  }
+
+  /**
+   * Launch Shortwave Radio Tuning Grid Selection mini-game.
+   */
+  startRadioTuningMiniGame() {
+    const electricalSkill = this.player?.skills?.electrical || 10;
+    const isElectrician = this.player?.occupation === 'electrician';
+
+    import('../minigames/templates/GridSelectionTemplate.js').then(({ GridSelectionTemplate }) => {
+      this.miniGameManager.launchActivity({
+        type: 'radio_tuning',
+        mechanic: 'grid_selection',
+        title: 'Shortwave Emergency Broadcast Tuning',
+        subtitle: 'Communications — Ham Radio Transceiver',
+        instructions: 'Sweep through frequencies on the radar grid using carrier wave proximity (HOT / WARM / COLD) to lock onto active broadcast signals.',
+        baseDifficulty: 0.45,
+        skillLevel: electricalSkill,
+        toolBonus: isElectrician ? 0.15 : 0,
+        gameMinutesSpent: 20,
+        requiredMaterials: [],
+        rewardDefinition: {
+          skillExp: { skillName: 'electrical', exp: 20 },
+        },
+      }, (stageEl, derivedParams, submitFn, cancelFn) => {
+        GridSelectionTemplate.mount(stageEl, derivedParams, {
+          activityType: 'radio_tuning',
+          gameMinutesSpent: 20,
+          onSubmit: (result) => {
+            const receipt = submitFn(result);
+            if (receipt.success && receipt.outcome === 'success') {
+              this.needs.fatigue = Math.max(0, this.needs.fatigue - 10);
+              if (this.sound) this.sound.playClick();
+              this.showNotification(`Emergency frequency captured! Broadcast audio brings relief from isolation (-10 Fatigue). Quality: ${receipt.qualityTier.toUpperCase()}.`);
+            } else if (receipt.outcome === 'failure') {
+              this.showNotification('Frequencies drowned in static noise. Antenna failed to resolve a carrier signal.');
+            }
+          },
+          onCancel: cancelFn,
+          setFeedback: (msg, type) => this.miniGameManager.activeOverlay?.setFeedback(msg, type),
+          setProgress: (pct, label) => this.miniGameManager.activeOverlay?.setProgress(pct, label),
+          setActionButton: (label, onClick) => this.miniGameManager.activeOverlay?.setActionButton(label, onClick),
+        });
+      });
+    });
+  }
+
+  /**
+   * Launch Supply Storage Pack and Fit mini-game.
+   */
+  startPackingMiniGame() {
+    const craftingSkill = this.player?.skills?.crafting || 10;
+
+    import('../minigames/templates/PackFitTemplate.js').then(({ PackFitTemplate }) => {
+      this.miniGameManager.launchActivity({
+        type: 'pack_supplies',
+        mechanic: 'pack_fit',
+        title: 'Emergency Supply Trunk Packing',
+        subtitle: 'Logistics — Secure Storage Trunk',
+        instructions: 'Pack candidate survival items into the storage trunk without exceeding the weight limit, maximizing total survival value.',
+        baseDifficulty: 0.40,
+        skillLevel: craftingSkill,
+        toolBonus: 0,
+        gameMinutesSpent: 20,
+        requiredMaterials: [],
+        rewardDefinition: {
+          money: 35,
+          skillExp: { skillName: 'crafting', exp: 25 },
+        },
+      }, (stageEl, derivedParams, submitFn, cancelFn) => {
+        PackFitTemplate.mount(stageEl, derivedParams, {
+          activityType: 'pack_supplies',
+          gameMinutesSpent: 20,
+          onSubmit: (result) => {
+            const receipt = submitFn(result);
+            if (receipt.success && receipt.outcome === 'success') {
+              if (this.sound) this.sound.playCash();
+              const rewardMoney = receipt.grantedRewards?.money || 35;
+              this.showNotification(`Storage trunk neatly organized! Payout: +$${rewardMoney} (${receipt.qualityTier.toUpperCase()} quality).`);
+            } else if (receipt.outcome === 'failure') {
+              this.showNotification('Packing disorganized. Container could not be sealed securely.');
             }
           },
           onCancel: cancelFn,
