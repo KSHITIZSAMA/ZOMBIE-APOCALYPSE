@@ -66,9 +66,18 @@ export class Renderer {
     truckRepaired = false
   ) {
     const ctx = this.ctx;
-    const { width, height } = this.canvas;
+    const dpr = typeof window !== 'undefined' ? (window.devicePixelRatio || 1) : 1;
+    const logW = this._logicalWidth || 1280;
+    const logH = this._logicalHeight || 720;
 
-    ctx.clearRect(0, 0, width, height);
+    ctx.save();
+    if (typeof ctx.setTransform === 'function') {
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+
+    ctx.clearRect(0, 0, logW, logH);
 
     if (sceneType === 'exterior') {
       // 1. Natural environment backdrop & ground
@@ -109,9 +118,11 @@ export class Renderer {
     if (damageFlashAlpha > 0) {
       ctx.save();
       ctx.fillStyle = `rgba(180, 25, 25, ${Math.min(0.65, damageFlashAlpha)})`;
-      ctx.fillRect(0, 0, width, height);
+      ctx.fillRect(0, 0, logW, logH);
       ctx.restore();
     }
+
+    ctx.restore();
   }
 
   /**

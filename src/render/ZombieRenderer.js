@@ -35,6 +35,13 @@ export class ZombieRenderer {
 
     ctx.save();
     ctx.translate(x, y);
+
+    // Ground contact shadow
+    ctx.fillStyle = 'rgba(18, 20, 24, 0.45)';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 16, 4.2, 0, 0, Math.PI * 2);
+    ctx.fill();
+
     ctx.scale(zombie.facing, 1);
 
     const phase = zombie.getWalkPhase();
