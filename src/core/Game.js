@@ -170,7 +170,7 @@ export class Game {
         x: 1375,
         width: 44,
         label: 'Reinforce Door Barricade (2 Planks)',
-        action: () => this.reinforceDoorBarricade(),
+        action: () => this.startBarricadeMiniGame(),
       },
       {
         id: 'house_door',
@@ -220,6 +220,13 @@ export class Game {
             this.showNotification('Mailbox: "Valley Gazette delivery. Distant sirens can be heard down Route 9."');
           }
         },
+      },
+      {
+        id: 'generator',
+        x: 1580,
+        width: 44,
+        label: 'Service Backup Generator',
+        action: () => this.startGeneratorMiniGame(),
       },
       {
         id: 'well',
@@ -277,6 +284,13 @@ export class Game {
           this.sound.playHammer();
           this.showNotification('Gathered 2x Timber Planks (1 hour elapsed).');
         },
+      },
+      {
+        id: 'locked_cache',
+        x: 2210,
+        width: 44,
+        label: 'Pick Locked Military Stash',
+        action: () => this.startLockpickMiniGame(),
       },
       {
         id: 'escape_truck',
@@ -1239,6 +1253,13 @@ export class Game {
    * Fortify the farmhouse door using gathered timber planks.
    */
   reinforceDoorBarricade() {
+    this.startBarricadeMiniGame();
+  }
+
+  /**
+   * Launch Barricade Boarding Timing Bar mini-game.
+   */
+  startBarricadeMiniGame() {
     if (this.doorBarricadeLevel >= BALANCE.BARRICADE_MAX_LEVEL) {
       this.showNotification('Farmhouse door is already heavily fortified to maximum capacity!');
       return;
@@ -1248,11 +1269,220 @@ export class Game {
       return;
     }
 
-    this.inventory.removeItem('wood', BALANCE.BARRICADE_WOOD_COST);
-    this.doorBarricadeLevel++;
-    this.baseDefenseLevel++;
-    this.sound.playHammer();
-    this.showNotification(`Reinforced farmhouse door! (Barricade Level ${this.doorBarricadeLevel}/${BALANCE.BARRICADE_MAX_LEVEL})`);
+    const craftingSkill = this.player?.skills?.crafting || 10;
+    const isCarpenter = this.player?.occupation === 'carpenter';
+
+    import('../minigames/templates/TimingBarTemplate.js').then(({ TimingBarTemplate }) => {
+      this.miniGameManager.launchActivity({
+        type: 'barricade_door',
+        mechanic: 'timing_bar',
+        title: `Barricading Farmhouse Door (Level ${this.doorBarricadeLevel + 1}/${BALANCE.BARRICADE_MAX_LEVEL})`,
+        subtitle: 'Structural Fortification — Ranch Porch',
+        instructions: 'Strike when the hammer needle aligns inside the sweet spot to drive structural heavy iron spikes into timber crossbeams.',
+        baseDifficulty: 0.40,
+        skillLevel: craftingSkill,
+        toolBonus: isCarpenter ? 0.15 : 0,
+        gameMinutesSpent: 20,
+        requiredMaterials: [{ itemId: 'wood', count: BALANCE.BARRICADE_WOOD_COST }],
+        rewardDefinition: {
+          skillExp: { skillName: 'crafting', exp: 25 },
+        },
+      }, (stageEl, derivedParams, submitFn, cancelFn) => {
+        TimingBarTemplate.mount(stageEl, derivedParams, {
+          activityType: 'barricade_door',
+          gameMinutesSpent: 20,
+          onSubmit: (result) => {
+            const receipt = submitFn(result);
+            if (receipt.success && receipt.outcome === 'success') {
+              this.doorBarricadeLevel++;
+              this.baseDefenseLevel++;
+              if (receipt.qualityTier === 'master') {
+                this.baseDefenseLevel++;
+              }
+              this.sound.playHammer();
+              this.showNotification(`Farmhouse door fortified! (Barricade Level ${this.doorBarricadeLevel}/${BALANCE.BARRICADE_MAX_LEVEL}, Defense: ${this.baseDefenseLevel}).`);
+            } else if (receipt.outcome === 'failure') {
+              this.showNotification('Planks splintered under misaligned strike! Timber wasted.');
+            }
+          },
+          onCancel: cancelFn,
+          setFeedback: (msg, type) => this.miniGameManager.activeOverlay?.setFeedback(msg, type),
+          setProgress: (pct, label) => this.miniGameManager.activeOverlay?.setProgress(pct, label),
+          setActionButton: (label, onClick) => this.miniGameManager.activeOverlay?.setActionButton(label, onClick),
+        });
+      });
+    });
+  }
+
+  /**
+   * Launch Ranch Backup Generator Connect and Match mini-game.
+   */
+  startGeneratorMiniGame() {
+    const electricalSkill = this.player?.skills?.electrical || 10;
+    const isElectrician = this.player?.occupation === 'electrician';
+
+    const generatorPairs = [
+      { id: 'gen_ignition', leftLabel: 'Ignition Switch', rightLabel: 'Starter Solenoid', color: '#e6ad61' },
+      { id: 'gen_fuel', leftLabel: 'Fuel Solenoid', rightLabel: 'Carburetor Float', color: '#58b5a0' },
+      { id: 'gen_ground', leftLabel: '12V Lead Battery', rightLabel: 'Chassis Earth Ground', color: '#7aa668' },
+      { id: 'gen_flood', leftLabel: 'Perimeter Relay', rightLabel: 'Floodlight Array', color: '#a880d8' },
+    ];
+
+    import('../minigames/templates/ConnectMatchTemplate.js').then(({ ConnectMatchTemplate }) => {
+      this.miniGameManager.launchActivity({
+        type: 'ranch_generator',
+        mechanic: 'connect_match',
+        title: 'Emergency Generator Wiring & Diagnostics',
+        subtitle: 'Perimeter Power — Ranch Backup Generator',
+        instructions: 'Match generator control circuits to restore perimeter power and emergency floodlights.',
+        baseDifficulty: 0.45,
+        skillLevel: electricalSkill,
+        toolBonus: isElectrician ? 0.15 : 0,
+        gameMinutesSpent: 25,
+        requiredMaterials: [],
+        rewardDefinition: {
+          skillExp: { skillName: 'electrical', exp: 30 },
+        },
+      }, (stageEl, derivedParams, submitFn, cancelFn) => {
+        ConnectMatchTemplate.mount(stageEl, derivedParams, {
+          activityType: 'ranch_generator',
+          pairs: generatorPairs,
+          gameMinutesSpent: 25,
+          onSubmit: (result) => {
+            const receipt = submitFn(result);
+            if (receipt.success && receipt.outcome === 'success') {
+              this.generatorRunning = true;
+              this.baseDefenseLevel++;
+              this.sound.playEngine();
+              this.showNotification(`Generator roaring to life! Ranch perimeter illuminated (+1 Base Defense).`);
+            } else if (receipt.outcome === 'failure') {
+              this.showNotification('Generator starter tripped! Circuits shorted.');
+            }
+          },
+          onCancel: cancelFn,
+          setFeedback: (msg, type) => this.miniGameManager.activeOverlay?.setFeedback(msg, type),
+          setProgress: (pct, label) => this.miniGameManager.activeOverlay?.setProgress(pct, label),
+          setActionButton: (label, onClick) => this.miniGameManager.activeOverlay?.setActionButton(label, onClick),
+        });
+      });
+    });
+  }
+
+  /**
+   * Launch Military Stash Lockpicking Timing Bar mini-game.
+   */
+  startLockpickMiniGame() {
+    if (this._lockedCacheOpened) {
+      this.showNotification('Military supply cache has already been opened and looted.');
+      return;
+    }
+
+    const scavengingSkill = this.player?.skills?.scavenging || 10;
+    const isScavenger = this.player?.traits?.includes('scavenger');
+
+    import('../minigames/templates/TimingBarTemplate.js').then(({ TimingBarTemplate }) => {
+      this.miniGameManager.launchActivity({
+        type: 'lockpick_cache',
+        mechanic: 'timing_bar',
+        title: 'Picking Locked Military Supply Stash',
+        subtitle: 'Survival Infiltration — Salvage Cache',
+        instructions: 'Align the tension pick into the tumbler shear line sweet spot to bypass the heavy brass padlock.',
+        baseDifficulty: 0.50,
+        skillLevel: scavengingSkill,
+        toolBonus: isScavenger ? 0.15 : 0,
+        gameMinutesSpent: 15,
+        requiredMaterials: [],
+        rewardDefinition: {
+          items: [
+            { itemId: 'canned_food', count: 2 },
+            { itemId: 'water_bottle', count: 1 },
+          ],
+          skillExp: { skillName: 'scavenging', exp: 30 },
+        },
+      }, (stageEl, derivedParams, submitFn, cancelFn) => {
+        TimingBarTemplate.mount(stageEl, derivedParams, {
+          activityType: 'lockpick_cache',
+          gameMinutesSpent: 15,
+          onSubmit: (result) => {
+            const receipt = submitFn(result);
+            if (receipt.success && receipt.outcome === 'success') {
+              this._lockedCacheOpened = true;
+              if (this.sound) this.sound.playClick();
+              this.showNotification(`Padlock snapped open! Recovered survival rations & clean water from cache.`);
+            } else if (receipt.outcome === 'failure') {
+              this.showNotification('Lockpick jammed in the cylinder! Padlock seized tight.');
+            }
+          },
+          onCancel: cancelFn,
+          setFeedback: (msg, type) => this.miniGameManager.activeOverlay?.setFeedback(msg, type),
+          setProgress: (pct, label) => this.miniGameManager.activeOverlay?.setProgress(pct, label),
+          setActionButton: (label, onClick) => this.miniGameManager.activeOverlay?.setActionButton(label, onClick),
+        });
+      });
+    });
+  }
+
+  /**
+   * Launch Utility Truck Engine Bay Overhaul Pack & Fit mini-game.
+   */
+  startTruckEngineMiniGame() {
+    const craftingSkill = this.player?.skills?.crafting || 15;
+    const isMechanic = this.player?.occupation === 'mechanic';
+
+    const engineParts = [
+      { id: 'carburetor', name: 'Carburetor Manifold', size: 3, value: 35, icon: '⚙️' },
+      { id: 'radiator_hose', name: 'Coolant Hose', size: 2, value: 25, icon: '🔧' },
+      { id: 'alt_belt', name: 'Alternator V-Belt', size: 1, value: 20, icon: '🪢' },
+      { id: 'spark_wires', name: 'Ignition Lead Wires', size: 2, value: 25, icon: '⚡' },
+      { id: 'mount_brace', name: 'Steel Engine Mount', size: 2, value: 30, icon: '🔩' },
+    ];
+
+    import('../minigames/templates/PackFitTemplate.js').then(({ PackFitTemplate }) => {
+      this.miniGameManager.launchActivity({
+        type: 'truck_engine_overhaul',
+        mechanic: 'pack_fit',
+        title: 'Utility Truck Engine Bay Assembly',
+        subtitle: 'Evacuation Route — Vehicle Mechanical Overhaul',
+        instructions: 'Fit the essential components securely into the engine bay to restore vehicle operation.',
+        baseDifficulty: 0.40,
+        skillLevel: craftingSkill,
+        toolBonus: isMechanic ? 0.20 : 0,
+        gameMinutesSpent: 30,
+        requiredMaterials: [{ itemId: 'wood', count: 2 }],
+        rewardDefinition: {
+          skillExp: { skillName: 'crafting', exp: 35 },
+        },
+      }, (stageEl, derivedParams, submitFn, cancelFn) => {
+        PackFitTemplate.mount(stageEl, derivedParams, {
+          activityType: 'truck_engine_overhaul',
+          availableItems: engineParts,
+          containerCapacity: 10,
+          gameMinutesSpent: 30,
+          onSubmit: (result) => {
+            const receipt = submitFn(result);
+            if (receipt.success && receipt.outcome === 'success') {
+              this.truckState.engineRepaired = true;
+              this.sound.playHammer();
+              this.showNotification('Engine bay fully restored! Mounts tightened and fuel line pressurized.');
+              if (this.isTruckFullyRepaired()) {
+                if (this.worldStage === 'outbreak') {
+                  this.triggerVictoryEscape();
+                } else {
+                  this.sound.playEngine();
+                  this.showNotification('Truck engine hums steadily! Ready for emergency evacuation if danger strikes.');
+                }
+              }
+            } else if (receipt.outcome === 'failure') {
+              this.showNotification('Engine components failed to seat properly. Manifold remains loose.');
+            }
+          },
+          onCancel: cancelFn,
+          setFeedback: (msg, type) => this.miniGameManager.activeOverlay?.setFeedback(msg, type),
+          setProgress: (pct, label) => this.miniGameManager.activeOverlay?.setProgress(pct, label),
+          setActionButton: (label, onClick) => this.miniGameManager.activeOverlay?.setActionButton(label, onClick),
+        });
+      });
+    });
   }
 
   /**
@@ -1300,10 +1530,15 @@ export class Game {
         this.sound.playHammer();
         this.showNotification('Mechanic expertise: Tuned the carburetor and reconnected spark plugs.');
       } else if (this.inventory.hasItem('wood', 2)) {
-        this.inventory.removeItem('wood', 2);
-        this.truckState.engineRepaired = true;
-        this.sound.playHammer();
-        this.showNotification('Replaced damaged engine mounts and secured belts with 2x Timber Planks.');
+        if (this.miniGameManager && this._container) {
+          this.startTruckEngineMiniGame();
+          return;
+        } else {
+          this.inventory.removeItem('wood', 2);
+          this.truckState.engineRepaired = true;
+          this.sound.playHammer();
+          this.showNotification('Replaced damaged engine mounts and secured belts with 2x Timber Planks.');
+        }
       } else {
         this.showNotification('Utility Truck: Engine manifold damaged. Requires 2x Timber Planks to fix (or Mechanic skill).');
         return;

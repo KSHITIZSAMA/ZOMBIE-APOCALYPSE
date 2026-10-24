@@ -65,6 +65,20 @@ export class RanchRenderer {
       width: 36,
       name: 'Caleb Miller',
     };
+
+    /** Backup Diesel Generator */
+    this.generator = {
+      x: 1580,
+      width: 44,
+      height: 34,
+    };
+
+    /** Locked Military Stash Cache */
+    this.lockedCache = {
+      x: 2210,
+      width: 36,
+      height: 24,
+    };
   }
 
   /**
@@ -86,7 +100,9 @@ export class RanchRenderer {
     this._drawWell(ctx, camera, groundY, daylight);
     this._drawGarden(ctx, camera, groundY, farmingSystem);
     this._drawShopStall(ctx, camera, groundY);
+    this._drawGenerator(ctx, camera, groundY, gameTime);
     this._drawWoodPile(ctx, camera, groundY);
+    this._drawLockedCache(ctx, camera, groundY);
     this._drawTruck(ctx, camera, groundY, truckRepaired, gameTime);
     this._drawMailbox(ctx, camera, groundY);
   }
@@ -757,6 +773,82 @@ export class RanchRenderer {
     ctx.textAlign = 'center';
     ctx.fillText('Caleb', screenX, headY - 13);
 
+    ctx.restore();
+  }
+
+  /**
+   * Draw exterior backup diesel generator.
+   */
+  _drawGenerator(ctx, camera, groundY, gameTime) {
+    const gx = this.generator.x - camera.x;
+    const gy = groundY - this.generator.height;
+    const gw = this.generator.width;
+    const gh = this.generator.height;
+
+    if (gx + gw < -50 || gx > ctx.canvas.width + 50) return;
+
+    ctx.save();
+    // Industrial housing
+    ctx.fillStyle = '#3c4a3e';
+    ctx.fillRect(gx, gy, gw, gh);
+    ctx.strokeStyle = PALETTE.OUTLINE;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(gx, gy, gw, gh);
+
+    // Radiator vents
+    ctx.strokeStyle = 'rgba(20, 24, 20, 0.7)';
+    ctx.lineWidth = 1.5;
+    for (let x = gx + 6; x < gx + gw - 16; x += 5) {
+      ctx.beginPath();
+      ctx.moveTo(x, gy + 8);
+      ctx.lineTo(x, gy + gh - 8);
+      ctx.stroke();
+    }
+
+    // Exhaust pipe
+    ctx.fillStyle = '#22262a';
+    ctx.fillRect(gx + gw - 10, gy - 12, 6, 12);
+    ctx.strokeRect(gx + gw - 10, gy - 12, 6, 12);
+
+    // Power status indicator
+    const ledColor = Math.sin(gameTime * 3) > 0 ? '#7ae668' : '#306028';
+    ctx.fillStyle = ledColor;
+    ctx.beginPath();
+    ctx.arc(gx + gw - 8, gy + 10, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  /**
+   * Draw military locked stash cache crate.
+   */
+  _drawLockedCache(ctx, camera, groundY) {
+    const lx = this.lockedCache.x - camera.x;
+    const ly = groundY - this.lockedCache.height;
+    const lw = this.lockedCache.width;
+    const lh = this.lockedCache.height;
+
+    if (lx + lw < -50 || lx > ctx.canvas.width + 50) return;
+
+    ctx.save();
+    // Heavy military crate
+    ctx.fillStyle = '#48523c';
+    ctx.fillRect(lx, ly, lw, lh);
+    ctx.strokeStyle = PALETTE.OUTLINE;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(lx, ly, lw, lh);
+
+    // Stencil cross
+    ctx.fillStyle = '#c9a378';
+    ctx.fillRect(lx + lw / 2 - 2, ly + 4, 4, 10);
+    ctx.fillRect(lx + lw / 2 - 5, ly + 7, 10, 4);
+
+    // Heavy steel padlock
+    ctx.fillStyle = '#d4af37';
+    ctx.fillRect(lx + lw / 2 - 3, ly + lh - 8, 6, 6);
+    ctx.strokeStyle = PALETTE.OUTLINE;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(lx + lw / 2 - 3, ly + lh - 8, 6, 6);
     ctx.restore();
   }
 }
