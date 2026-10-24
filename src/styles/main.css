@@ -1477,4 +1477,248 @@ html, body {
   text-align: left;
 }
 
+/* ============================================
+   MINI-GAME FRAMEWORK STYLES
+   Gloomy hand-drawn aesthetic & modal layout
+   ============================================ */
+
+.minigame-overlay {
+  z-index: 150;
+  background: rgba(12, 15, 20, 0.88);
+  backdrop-filter: blur(10px);
+}
+
+.minigame-panel {
+  width: 92%;
+  max-width: 580px;
+  background: rgba(24, 28, 34, 0.96);
+  border: 2px solid rgba(230, 224, 210, 0.15);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(0, 0, 0, 0.5);
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  color: var(--color-paper);
+}
+
+.minigame-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: var(--space-sm);
+}
+
+.minigame-header-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.minigame-tag {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+.minigame-title {
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  line-height: 1.1;
+  color: #fff6e5;
+  margin: 0;
+}
+
+.minigame-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.minigame-close-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--color-text-secondary);
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.minigame-close-btn:hover {
+  background: rgba(169, 75, 67, 0.3);
+  border-color: rgba(169, 75, 67, 0.6);
+  color: #ff9990;
+}
+
+.minigame-instructions-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  background: rgba(230, 173, 97, 0.08);
+  border: 1px solid rgba(230, 173, 97, 0.25);
+  border-radius: var(--radius-sm);
+  padding: var(--space-sm) var(--space-md);
+  font-size: 0.9rem;
+  color: #f0dfc8;
+}
+
+.minigame-info-icon {
+  font-size: 1.1rem;
+}
+
+.minigame-stage-wrapper {
+  background: rgba(15, 18, 22, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-md);
+  min-height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-md);
+  position: relative;
+  overflow: hidden;
+}
+
+.minigame-stage {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.minigame-progress-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.minigame-progress-track {
+  flex: 1;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.minigame-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-grass), var(--color-accent));
+  transition: width var(--transition-fast);
+}
+
+.minigame-progress-text {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  min-width: 65px;
+  text-align: right;
+}
+
+.minigame-feedback {
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.minigame-feedback-info {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--color-paper);
+}
+
+.minigame-feedback-success {
+  background: rgba(104, 116, 90, 0.2);
+  border: 1px solid rgba(104, 116, 90, 0.4);
+  color: #c9e2b8;
+}
+
+.minigame-feedback-danger {
+  background: rgba(169, 75, 67, 0.2);
+  border: 1px solid rgba(169, 75, 67, 0.4);
+  color: #ff9990;
+}
+
+.minigame-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: var(--space-md);
+  margin-top: var(--space-xs);
+}
+
+.minigame-footer-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-left: auto;
+}
+
+.minigame-btn {
+  padding: 8px 16px;
+  font-size: 0.88rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  border: 1px solid transparent;
+  font-family: var(--font-body);
+  transition: all var(--transition-fast);
+}
+
+.minigame-btn-primary {
+  background: var(--color-accent);
+  color: #1a1e24;
+  font-weight: 600;
+}
+
+.minigame-btn-primary:hover {
+  background: var(--color-accent-hover);
+}
+
+.minigame-btn-secondary {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: var(--color-paper);
+}
+
+.minigame-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.minigame-assisted-btn {
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--color-text-secondary);
+}
+
+.minigame-assisted-btn.active {
+  background: rgba(230, 173, 97, 0.2);
+  border-color: rgba(230, 173, 97, 0.5);
+  color: var(--color-accent);
+}
+
+.minigame-quickwork-btn {
+  background: rgba(104, 116, 90, 0.2);
+  border-color: rgba(104, 116, 90, 0.4);
+  color: #c9e2b8;
+  font-weight: 600;
+}
+
+.minigame-quickwork-btn:hover {
+  background: rgba(104, 116, 90, 0.35);
+}
+
+
 

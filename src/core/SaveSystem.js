@@ -80,6 +80,7 @@ export class SaveSystem {
         inventory: game.inventory.serialize(),
         farming: game.farmingSystem.serialize(),
         events: game.eventManager.serialize(),
+        miniGames: game.miniGameManager ? game.miniGameManager.serialize() : null,
       };
 
       localStorage.setItem(SAVE_KEY, JSON.stringify(payload));
@@ -144,6 +145,11 @@ export class SaveSystem {
       // 5. Restore Event Manager (completed events, decisions, schedule)
       if (data.events && game.eventManager) {
         game.eventManager.deserialize(data.events);
+      }
+
+      // Restore Mini-Game System (processed reward IDs, mastery, assisted mode)
+      if (data.miniGames && game.miniGameManager) {
+        game.miniGameManager.deserialize(data.miniGames);
       }
 
       // 6. Restore Scene

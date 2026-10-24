@@ -27,6 +27,7 @@ import { Zombie } from '../entities/Zombie.js';
 import { SoundSystem } from '../audio/SoundSystem.js';
 import { getOccupation } from '../data/occupations.js';
 import { getStoryEvent } from '../data/events.js';
+import { MiniGameManager } from '../minigames/MiniGameManager.js';
 import { BALANCE } from '../data/balance.js';
 
 /** @enum {string} Game states */
@@ -56,10 +57,11 @@ export class Game {
     this.camera = null;
     this.rng = null;
 
-    // Life Simulation systems
+    // Life Simulation & Mini-Game systems
     this.needs = new NeedsSystem();
     this.inventory = new Inventory(BALANCE.INVENTORY_CAPACITY);
     this.farmingSystem = new FarmingSystem();
+    this.miniGameManager = new MiniGameManager(this);
 
     // Story, Outbreak & Combat systems
     this.eventManager = new EventManager();
@@ -508,6 +510,7 @@ export class Game {
     this.needs = new NeedsSystem();
     this.inventory = new Inventory(BALANCE.INVENTORY_CAPACITY);
     this.farmingSystem = new FarmingSystem();
+    this.miniGameManager = new MiniGameManager(this);
     this.eventManager = new EventManager(this.rng);
     this.worldStage = 'normal';
     this.baseDefenseLevel = 0;
