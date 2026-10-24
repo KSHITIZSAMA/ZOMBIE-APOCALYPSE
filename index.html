@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Before the Dead — A stickman zombie survival game. Build your life, prepare for the apocalypse, and survive." />
+  <title>Before the Dead</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/styles/main.css" />
+</head>
+<body>
+  <div id="game-container">
+    <canvas id="game-canvas"></canvas>
+
+    <!-- Screen Fade Transition Overlay -->
+    <div id="screen-fade"></div>
+
+    <!-- HUD Overlay -->
+    <div id="hud" class="hud hidden">
+      <div class="hud-top-bar">
+        <div class="hud-clock">
+          <span id="hud-day" class="hud-label">Day 1</span>
+          <span id="hud-time" class="hud-label">06:00</span>
+          <span id="hud-location" class="hud-label">Suncrest Ranch</span>
+        </div>
+        <div class="hud-status">
+          <span id="hud-name" class="hud-label">Survivor</span>
+          <span id="hud-money" class="hud-label">$500</span>
+          <button id="btn-hud-audio" class="hud-btn" title="Toggle Sound">🔊</button>
+          <button id="btn-hud-inv" class="hud-btn" title="Open Inventory (I)">🎒 Pack</button>
+        </div>
+      </div>
+      <!-- Needs Status Bars -->
+      <div class="hud-needs-bar">
+        <div class="need-meter" title="Health">
+          <span class="need-icon">❤️</span>
+          <div class="meter-track"><div id="meter-health" class="meter-fill fill-health" style="width: 100%;"></div></div>
+        </div>
+        <div class="need-meter" title="Hunger">
+          <span class="need-icon">🍖</span>
+          <div class="meter-track"><div id="meter-hunger" class="meter-fill fill-hunger" style="width: 15%;"></div></div>
+        </div>
+        <div class="need-meter" title="Thirst">
+          <span class="need-icon">💧</span>
+          <div class="meter-track"><div id="meter-thirst" class="meter-fill fill-thirst" style="width: 15%;"></div></div>
+        </div>
+        <div class="need-meter" title="Fatigue">
+          <span class="need-icon">⚡</span>
+          <div class="meter-track"><div id="meter-fatigue" class="meter-fill fill-fatigue" style="width: 10%;"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="notification-toast" class="notification-toast hidden"></div>
+
+    <!-- Pause Overlay -->
+    <div id="pause-overlay" class="overlay hidden">
+      <div class="overlay-panel">
+        <h1 class="overlay-title">Paused</h1>
+        <p class="overlay-subtitle">Press <kbd>Escape</kbd> to resume</p>
+        <div class="overlay-buttons">
+          <button id="btn-resume" class="btn btn-primary">Resume</button>
+          <button id="btn-save-game" class="btn btn-secondary">Save Run</button>
+          <button id="btn-load-game" class="btn btn-secondary">Load Run</button>
+          <button id="btn-title-return" class="btn btn-secondary">Return to Title</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Game Over / Last Stand Screen -->
+    <div id="game-over-screen" class="overlay hidden">
+      <div class="overlay-panel game-over-panel">
+        <h1 class="game-over-title">YOU DID NOT SURVIVE</h1>
+        <p class="game-over-subtitle">Ending A — The Last Stand</p>
+        <p id="game-over-cause" class="game-over-cause">Succumbed to mortal wounds in the valley.</p>
+
+        <div class="game-over-stats">
+          <div class="stat-row">
+            <span class="stat-label">Days Survived:</span>
+            <span id="stat-days" class="stat-value">Day 1</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Time Reached:</span>
+            <span id="stat-time" class="stat-value">06:00</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Infected Defeated:</span>
+            <span id="stat-zombies" class="stat-value">0</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Warnings & Events:</span>
+            <span id="stat-warnings" class="stat-value">0</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Crops Harvested:</span>
+            <span id="stat-crops" class="stat-value">0</span>
+          </div>
+        </div>
+
+        <div class="overlay-buttons">
+          <button id="btn-restart-game" class="btn btn-primary btn-large">Start New Run</button>
+          <button id="btn-gameover-title" class="btn btn-secondary">Main Menu</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Victory / Evacuation Screen -->
+    <div id="victory-screen" class="overlay hidden">
+      <div class="overlay-panel victory-panel">
+        <div class="victory-banner">ESCAPE SUCCESSFUL</div>
+        <h1 class="victory-title">VALLEY EVACUATED</h1>
+        <p class="victory-subtitle">Ending B — The Evacuation Corridor</p>
+        <p id="victory-narrative" class="victory-narrative">The utility truck roared to life, shattering the fog as you punched through the perimeter roadblock towards the state safe zone.</p>
+
+        <div id="victory-companion-badge" class="companion-badge">
+          <span class="companion-icon">🤝</span>
+          <span id="victory-companion-text">Caleb Miller escaped with you!</span>
+        </div>
+
+        <div class="victory-stats">
+          <div class="stat-row">
+            <span class="stat-label">Days Survived:</span>
+            <span id="vstat-days" class="stat-value">Day 3</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Evacuation Time:</span>
+            <span id="vstat-time" class="stat-value">14:00</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Infected Neutralized:</span>
+            <span id="vstat-zombies" class="stat-value">0</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Remaining Funds:</span>
+            <span id="vstat-money" class="stat-value">$500</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Crops Harvested:</span>
+            <span id="vstat-crops" class="stat-value">0</span>
+          </div>
+        </div>
+
+        <div class="overlay-buttons">
+          <button id="btn-victory-restart" class="btn btn-primary btn-large">Start New Run</button>
+          <button id="btn-victory-title" class="btn btn-secondary">Main Menu</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Title Screen -->
+    <div id="title-screen" class="overlay">
+      <div class="title-panel">
+        <div class="title-art">
+          <div class="title-silhouettes"></div>
+        </div>
+        <h1 class="game-title">Before the Dead</h1>
+        <p class="game-subtitle">Prepare. Survive. Endure.</p>
+        <div class="title-buttons">
+          <button id="btn-continue-game" class="btn btn-secondary btn-large hidden">Continue Run</button>
+          <button id="btn-new-game" class="btn btn-primary btn-large">New Game</button>
+        </div>
+        <p class="version-label">Release v1.0 — Complete Edition</p>
+      </div>
+    </div>
+
+    <!-- Character Creator (injected dynamically by CharacterCreator.js) -->
+    <!-- Debug Panel (injected by JS in dev mode only) -->
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
